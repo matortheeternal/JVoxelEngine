@@ -1,11 +1,18 @@
 // $Id$
 /*
-* Mandel.js v0.9
-* created by matortheeternal // Colin Allen
-* 02/07/2014
+* Mandel.js v1.0
+* created by matortheeternal
+* 04/16/2014
 * 
 * Usage:
 * /cs mandel <blocktype> <mandeltype> <size>
+*
+* Palettes:
+* For mandelboxes and mandelbulbs you can use a palette instead of a single
+* block type.  See the main palettes section around line 82 for more information
+* and a listing of the valid palettes.  You use the name before "BlockList" to
+* specify the palette you want to use.  E.g. 
+*   /cs mandel grayscale box 100 -1.75 3.8 4 5 4
 *
 * Valid mandeltypes:
 *   sponge: Makes a Menger Sponge.  Iteration size 1-6.
@@ -15,6 +22,15 @@
 *   hilbert: Makes a Hilbert Curve.  Iteration size 1-5.
 *   octahedron: Makes an Octahedron Fractal.  Iteration size 1-5.
 *   dodecahedron: working...
+*   box: Makes a mandelbox.  Size is dimensional value (5-255).
+         Additional arguments: 
+            - arg4 is the mandelbox scale.  Choose a value between -3 and 3.
+            - arg5 is the bailout value.  Choose smaller values  if abs(scale) is low.
+              Recommended range: 3-8
+            - arg6 is the minimum iteration for placing blocks.  I recommend a value of ~4.
+            - arg7 is the iteration range.  I recommend a value between 3 and 8.
+            - arg8 is a zoom factor.  This should be ~5 if you have a smaller scale (e.g. -1.5, 1.5).
+              It should be ~2 if you have a larger scale (e.g. -2, 2).
 *   bulb: Makes a Mandelbulb.  Size is dimensional value (5-255).
 *   cBulb: Makes a custom Mandelbulb (slower). Size is dimensional value (5-255).
 */
@@ -1256,8 +1272,8 @@ function cBulb() {
 function box() {
     var arg4 = argv[4] > -10 ? parseFloat(argv[4]) : 2;
     var arg5 = argv[5] > 0 ? parseFloat(argv[5]) : 4;
-    var itMinBox = argv[6] > 0 ? parseInt(argv[6]) : 2;
-    var itMaxBox = (argv[7] > 0) && (argv[7] < 17) ? parseInt(argv[7]) + itMinBox : 16 + itMinBox;
+    var itMinBox = argv[6] > 0 ? parseInt(argv[6]) : 4;
+    var itMaxBox = (argv[7] > 0) && (argv[7] < 17) ? parseInt(argv[7]) + itMinBox : 5 + itMinBox;
     var tfmult = argv[8] > 0 ? parseFloat(argv[8]) : 2;
     var tfsub = tfmult/2;
     for (var x = 0; x < d; x++) {
