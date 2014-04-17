@@ -1186,7 +1186,7 @@ function hilbertTurtle(d0) {
 
 // making a quick mandelbulb
 function bulb() {
-    for (var x = arg4; x < arg5; x++) {
+    for (var x = 0; x < d; x++) {
         var xc = tf(x);
         for (var y = 0; y < d; y++) {
             var yc = tf(y);
@@ -1233,7 +1233,7 @@ function bulb() {
 
 // making a custom mandelbulb
 function cBulb() {
-    for (var x = arg4; x < arg5; x++) {
+    for (var x = 0; x < d; x++) {
         var xc = tf(x);
         for (var y = 0; y < d; y++) {
             var yc = tf(y);
