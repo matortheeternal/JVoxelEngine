@@ -65,25 +65,9 @@ var gr = (1 + Math.pow(5, 0.5))/2; // golden ratio
 var volume = 0; // tracks number of blocks placed
 var tfMult = 2.0;
 var tfSub = 1.0;
-var cutoff = 1024; // the value at which to stop calculations.  changing this won't affect much, should be between 100 and 10,000
-var itMin = 4; // minimum iterations for block placement.  I recommend a value of 4 or 5.  3 and 6 could also work.
-var itMax = 20; // maximum iterations.  chance of exceeding the cutoff value decreases with each iteration.  directly affects speed of generation.
 var amplitude = 8;
 var thetaAdj = 0.000001; // used to prevent division by 0
 var phiAdj = 0.0000001; // used to prevent division by 0
-// this data is used to skip interior points instead of going through iterations until itMax on quickBulb
-var mindata = [
-    [0.331*d, 0.335*d, 0.331*d, 0.338*d, 0.339*d, 0.327*d, 0.338*d, 0.331*d, 0.335*d, 0.331*d],
-    [0.333*d, 0.359*d, 0.329*d, 0.340*d, 0.337*d, 0.329*d, 0.340*d, 0.329*d, 0.359*d, 0.333*d],
-    [0.319*d, 0.319*d, 0.328*d, 0.329*d, 0.329*d, 0.327*d, 0.329*d, 0.328*d, 0.339*d, 0.319*d],
-    [0.345*d, 0.349*d, 0.342*d, 0.339*d, 0.349*d, 0.336*d, 0.339*d, 0.342*d, 0.349*d, 0.345*d],
-    [0.331*d, 0.356*d, 0.329*d, 0.319*d, 0.338*d, 0.327*d, 0.319*d, 0.329*d, 0.356*d, 0.331*d],
-    [0.335*d, 0.349*d, 0.332*d, 0.332*d, 0.339*d, 0.331*d, 0.332*d, 0.332*d, 0.349*d, 0.335*d],
-    [0.327*d, 0.349*d, 0.328*d, 0.329*d, 0.338*d, 0.327*d, 0.329*d, 0.328*d, 0.349*d, 0.327*d],
-    [0.342*d, 0.365*d, 0.336*d, 0.339*d, 0.352*d, 0.329*d, 0.339*d, 0.336*d, 0.365*d, 0.342*d],
-    [0.328*d, 0.329*d, 0.328*d, 0.328*d, 0.329*d, 0.319*d, 0.328*d, 0.328*d, 0.329*d, 0.328*d],
-    [0.338*d, 0.339*d, 0.334*d, 0.334*d, 0.339*d, 0.329*d, 0.334*d, 0.334*d, 0.339*d, 0.338*d]
-];
 
 /* 
 * >>> Block Lists (palettes) <<<
@@ -1186,10 +1170,32 @@ function hilbertTurtle(d0) {
 
 // making a quick mandelbulb
 function bulb() {
-    for (var x = arg4; x < arg5; x++) {
-        var xc = tf(x);
+    // set local variables
+    var power = 8;
+    var cutoff = 1024;
+    var itMin = 4;
+    var itMax = 20;
+    var tfMult = 2;
+    var tfSub = tfMult/2;
+    // this data is used to skip interior points instead of going through iterations until itMax
+    var mindata = [
+        [0.331*d, 0.335*d, 0.331*d, 0.338*d, 0.339*d, 0.327*d, 0.338*d, 0.331*d, 0.335*d, 0.331*d],
+        [0.333*d, 0.359*d, 0.329*d, 0.340*d, 0.337*d, 0.329*d, 0.340*d, 0.329*d, 0.359*d, 0.333*d],
+        [0.319*d, 0.319*d, 0.328*d, 0.329*d, 0.329*d, 0.327*d, 0.329*d, 0.328*d, 0.339*d, 0.319*d],
+        [0.345*d, 0.349*d, 0.342*d, 0.339*d, 0.349*d, 0.336*d, 0.339*d, 0.342*d, 0.349*d, 0.345*d],
+        [0.331*d, 0.356*d, 0.329*d, 0.319*d, 0.338*d, 0.327*d, 0.319*d, 0.329*d, 0.356*d, 0.331*d],
+        [0.335*d, 0.349*d, 0.332*d, 0.332*d, 0.339*d, 0.331*d, 0.332*d, 0.332*d, 0.349*d, 0.335*d],
+        [0.327*d, 0.349*d, 0.328*d, 0.329*d, 0.338*d, 0.327*d, 0.329*d, 0.328*d, 0.349*d, 0.327*d],
+        [0.342*d, 0.365*d, 0.336*d, 0.339*d, 0.352*d, 0.329*d, 0.339*d, 0.336*d, 0.365*d, 0.342*d],
+        [0.328*d, 0.329*d, 0.328*d, 0.328*d, 0.329*d, 0.319*d, 0.328*d, 0.328*d, 0.329*d, 0.328*d],
+        [0.338*d, 0.339*d, 0.334*d, 0.334*d, 0.339*d, 0.329*d, 0.334*d, 0.334*d, 0.339*d, 0.338*d]
+    ];
+    
+    // loop through xyz space
+    for (var x = 0; x < d; x++) {
+        var xc = (tfMult * x)/d - tfSub;
         for (var y = 0; y < d; y++) {
-            var yc = tf(y);
+            var yc = (tfMult * y)/d - tfSub;
             for (var z = 0; z < d; z++) {
                 /* Continue if radius is less than stored mindata value.
                  * This saves a lot of time by not performing itMax iterations
@@ -1201,7 +1207,7 @@ function bulb() {
                 if (r < mindata[i1][i2])
                     continue;
                 
-                var zc = tf(z);
+                var zc = (tfMult * z)/d - tfSub;
                 
                 var iterations = -1;
                 var C = new Vector(xc, yc, zc);
@@ -1209,7 +1215,7 @@ function bulb() {
                 
                 // iterate over vectors
                 while ((mag(Z) <= cutoff) && (iterations < itMax)) {
-                    Z = add(formula(Z, amplitude), C);
+                    Z = add(formula(Z, power), C);
                     iterations++;
                 }
                 
@@ -1231,22 +1237,31 @@ function bulb() {
     }
 }
 
-// making a custom mandelbulb
+// generate a custom mandelbulb
 function cBulb() {
-    for (var x = arg4; x < arg5; x++) {
-        var xc = tf(x);
+    // set local variables
+    var power = argv[4] > 0 ? parseFloat(argv[4]) : 8;
+    var bailout = argv[5] > 0 ? parseFloat(argv[5]) : 1024;
+    var itMin = argv[6] > 0 ? parseInt(argv[6]) : 4;
+    var itMax = argv[7] > 0 ? parseInt(argv[7]) + itMin : 16 + itMin;
+    var tfMult = argv[8] > 0 ? parseFloat(argv[8]) : 2;
+    var tfSub = tfMult/2;
+    
+    // loop through xyz space
+    for (var x = 0; x < d; x++) {
+        var xc = (tfMult * x)/d - tfSub;
         for (var y = 0; y < d; y++) {
-            var yc = tf(y);
+            var yc = (tfMult * y)/d - tfSub;
             for (var z = 0; z < d; z++) {
-                var zc = tf(z);
+                var zc = (tfMult * z)/d - tfSub;
                 
                 var iterations = -1;
                 var C = new Vector(xc, yc, zc);
                 var Z = new Vector(0, 0, 0);
                 
                 // iterate over vectors
-                while ((mag(Z) <= cutoff) && (iterations < itMax)) {
-                    Z = add(formula(Z, amplitude), C);
+                while ((mag(Z) <= bailout) && (iterations < itMax)) {
+                    Z = add(formula(Z, power), C);
                     iterations++;
                 }
                 
@@ -1390,12 +1405,6 @@ function arot(vec, dim, a) {
         xaxis.getY() * n[0][2] + yaxis.getY()*n[1][2] + zaxis.getY() * n[2][2], 
         xaxis.getZ() * n[0][2] + yaxis.getZ()*n[1][2] + zaxis.getZ() * n[2][2]);
     return result;
-}
-
-// mandelbulb coordinate transform function
-// returns a number between -1 and 1
-function tf(v) {
-    return (tfMult * v)/d - tfSub;
 }
 
 // vector magnitude function
