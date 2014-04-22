@@ -25,12 +25,11 @@
 *   box: Makes a mandelbox.  Size is dimensional value (5-255).
          Additional arguments: 
             - arg4 is the mandelbox scale.  Choose a value between -3 and 3.
-            - arg5 is the bailout value.  Choose smaller values  if abs(scale) is low.
+            - arg5 is the bailout value.  Choose smaller values if abs(scale) is low.
               Recommended range: 3-8
             - arg6 is the minimum iteration for placing blocks.  I recommend a value of ~4.
             - arg7 is the iteration range.  I recommend a value between 3 and 8.
-            - arg8 is a zoom factor.  This should be ~5 if you have a smaller scale (e.g. -1.5, 1.5).
-              It should be ~2 if you have a larger scale (e.g. -2, 2).
+            - arg8 is a zoom factor.  Best results are between 4 and 8, usually.
 *   bulb: Makes a Mandelbulb.  Size is dimensional value (5-255).
 *   cBulb: Makes a custom Mandelbulb (slower). Size is dimensional value (5-255).
 */
@@ -811,7 +810,37 @@ function dodecahedron(d0, wOffset, hOffset, lOffset) {
         sdodec(d0, wOffset, hOffset, lOffset)
     else {
         // make 20 dodecahedrons at corners of current dodecahedron
-        dodecahedron(d1, d0/2, 0, 0);
+        var ru = d1/2;
+        var ri = (1.113517364*ru)/1.401258538;
+        var rnu = scale*ru;
+        var rni = scale*ri;
+        var r18 = d2r(18);
+        var r54 = d2r(54);
+        
+        // initial x,y,z for bottom layer
+        var x = wOffset;
+        var y = hOffset + (ru - ri);
+        var z = lOffset;
+        
+        //x and z for bottom & top layers
+        var x1 = x + (ru - rnu)*(1 - Math.cos(r18));
+        var z1 = z + (ru - ri) - (rnu - rni);
+        var x2 = x1 + 2 * ru * Math.cos(r54);
+        var x3 = x1 - ru*(Math.cos(r18) - Math.cos(r54));
+        var z3 = z1 + ru*(Math.sin(r54) + Math.sin(r18));
+        var x4 = x3 + 2*Math.cos(r54)*ru;
+        var x5 = x + 2*ru - 2*rnu;
+        var z5 = z + ru - rnu;
+        
+        // bottom layer
+        dodecahedron(d1, x1, y, z1);
+        dodecahedron(d1, x2, y, z1);
+        dodecahedron(d1, x3, y, z3);
+        dodecahedron(d1, x4, y, z3);
+        dodecahedron(d1, x5, y, z5);
+        
+        // intial y for top layer
+        var y = y + 2*ri;
     }
 }
 
@@ -1289,7 +1318,7 @@ function box() {
     var arg5 = argv[5] > 0 ? parseFloat(argv[5]) : 4;
     var itMinBox = argv[6] > 0 ? parseInt(argv[6]) : 4;
     var itMaxBox = (argv[7] > 0) && (argv[7] < 17) ? parseInt(argv[7]) + itMinBox : 5 + itMinBox;
-    var tfmult = argv[8] > 0 ? parseFloat(argv[8]) : 2;
+    var tfmult = argv[8] > 0 ? parseFloat(argv[8]) : 4;
     var tfsub = tfmult/2;
     for (var x = 0; x < d; x++) {
         var xc = (tfmult * x)/(d - 1) - tfsub;
