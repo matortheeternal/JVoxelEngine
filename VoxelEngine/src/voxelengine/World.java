@@ -328,11 +328,35 @@ public class World {
 		library.addType(new BlockType(null, "white", "A", Color.WHITE));
 		library.addType(new BlockType(null, "gray", "B", Color.GRAY));
 		library.addType(new BlockType(null, "darkGray", "C", Color.DARK_GRAY));
+		library.addType(new BlockType(null, "gloriousBlue", "D", new Color(7,8,114)));
+		library.addType(new BlockType(null, "watermelon", "E", new Color(247,70,122)));
+		library.addType(new BlockType(null, "gloriousViolet", "F", new Color(73,8,162)));
+		library.addType(new BlockType(null, "darkBlue", "G", new Color(14,0,42)));
+		library.addType(new BlockType(null, "brownPurple", "H", new Color(40,0,22)));
+		library.addType(new BlockType(null, "turquoise", "I", new Color(85,135,136)));
+		library.addType(new BlockType(null, "lightTurquoise", "J", new Color(136,181,178)));
+		library.addType(new BlockType(null, "klineWhite", "K", new Color(224,225,219)));
+		library.addType(new BlockType(null, "salmon", "L", new Color(255,179,158)));
+		library.addType(new BlockType(null, "rust", "M", new Color(183,63,38)));
+		library.addType(new BlockType(null, "strongCyan", "N", new Color(105,210,231)));
+		library.addType(new BlockType(null, "muddledCyan", "O", new Color(167,219,216)));
+		library.addType(new BlockType(null, "stormyWhite", "P", new Color(224,228,204)));
+		library.addType(new BlockType(null, "goldfish", "Q", new Color(243,134,48)));
+		library.addType(new BlockType(null, "strongOrange", "R", new Color(250,105,0)));
+		library.addType(new BlockType(null, "lime", "S", new Color(207,240,158)));
+		library.addType(new BlockType(null, "greenFoam", "T", new Color(168,219,168)));
+		library.addType(new BlockType(null, "seaGreen", "U", new Color(121,189,154)));
+		library.addType(new BlockType(null, "darkTurquoise", "V", new Color(59,134,134)));
+		library.addType(new BlockType(null, "royalBlue", "W", new Color(11,72,107)));
 	}
 	
 	public void addPalettes() {
 		palettes.add(new Palette("test", new String[]{"white", "gray", "darkGray", "black", "red", "orange", "yellow", "green", "cyan", "blue", "magenta", "pink"}));
 		palettes.add(new Palette("blackNblue", new String[]{"white", "gray", "darkGray", "black", "blue", "cyan", "white", "gray", "darkGray", "blue", "cyan", "white"}));
+		palettes.add(new Palette("glory", new String[]{"gloriousBlue", "watermelon", "gloriousViolet", "darkBlue", "brownPurple", "gloriousBlue", "watermelon", "gloriousViolet", "darkBlue", "brownPurple"}));
+		palettes.add(new Palette("boutique", new String[]{"turquoise", "lightTurquoise", "klineWhite", "salmon", "rust", "turquoise", "lightTurquoise", "klineWhite", "salmon", "rust"}));
+		palettes.add(new Palette("goldfish", new String[]{"strongCyan", "muddledCyan", "stormyWhite", "goldfish", "strongOrange", "strongCyan", "muddledCyan", "stormyWhite", "goldfish", "strongOrange"}));
+		palettes.add(new Palette("dreamy", new String[]{"lime", "greenFoam", "seaGreen", "darkTurquoise", "royalBlue", "lime", "greenFoam", "seaGreen", "darkTurquoise", "royalBlue"}));
 	}
 	
 	public Palette getPalette(String name) {

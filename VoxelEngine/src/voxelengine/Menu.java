@@ -21,25 +21,54 @@ import java.awt.event.ItemListener;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 
-public class Menu extends Applet implements ActionListener, ItemListener {
+@SuppressWarnings("serial")
+public class Menu extends Applet implements ActionListener, ItemListener, Runnable {
+	@SuppressWarnings("unused")
 	private Button generateWorld, settings, quit, ok, back, generate;
 	private TextField size, worldSize, minIt, maxIt, power, zoom, cutoff;
+	@SuppressWarnings("unused")
 	private Label sizeL, colorL, worldSizeL, minItL, maxItL, powerL, zoomL, resL, pixL, castL, cutoffL;
 	private Choice choice, color;
 	private AudioClip sound;
-	private Image background;
+	private Image bg1, bg2, bg3, bg4, bg5, bg6, bg7, bg8, bg9, bg10;
+	private Image[] slideshow;
 	private Panel pnl;
+	private int ndx = 0;
+	private long time = System.currentTimeMillis();
+	private long ttime = 4000;
+	private Thread rpThread;
+	
+	public void start() {
+		if (rpThread == null) {
+		    rpThread = new Thread(this, "repaint");
+		    rpThread.start();
+		}
+    }
 	
 	public void init() {
 		this.setSize(784, 562);
-		background = getImage(getCodeBase(), "background.jpg");
+		bg1 = getImage(getCodeBase(), "bg1.jpg");
+		bg2 = getImage(getCodeBase(), "bg2.jpg");
+		bg3 = getImage(getCodeBase(), "bg3.jpg");
+		bg4 = getImage(getCodeBase(), "bg4.jpg");
+		bg5 = getImage(getCodeBase(), "bg5.jpg");
+		bg6 = getImage(getCodeBase(), "bg6.jpg");
+		bg7 = getImage(getCodeBase(), "bg7.jpg");
+		bg8 = getImage(getCodeBase(), "bg8.jpg");
+		bg9 = getImage(getCodeBase(), "bg9.jpg");
+		bg10 = getImage(getCodeBase(), "bg10.jpg");
+		slideshow = new Image[]{bg1, bg2, bg3, bg4, bg5, bg6, bg7, bg8, bg9, bg10};
 		sound = getAudioClip(getCodeBase(), "menu.au");
 		sound.loop();
 		mainMenu();
 	}
 	
 	public void paint(Graphics g) {
-		g.drawImage(background, 0, 0, this);
+		if (System.currentTimeMillis() - time >= ttime) {
+			time = System.currentTimeMillis();
+			ndx = (ndx + 1) % 9;
+		}
+		g.drawImage(slideshow[ndx], 0, 0, this);
 	}
 
 	@Override
@@ -224,6 +253,10 @@ public class Menu extends Applet implements ActionListener, ItemListener {
 		color.removeAll();
 		color.addItem("test");
 		color.addItem("blackNblue");
+		color.addItem("glory");
+		color.addItem("boutique");
+		color.addItem("goldfish");
+		color.addItem("dreamy");
 		powerL.setText("Power: ");
 		power.setEnabled(true);
 		zoom.setEnabled(false);
@@ -238,6 +271,10 @@ public class Menu extends Applet implements ActionListener, ItemListener {
 		color.removeAll();
 		color.addItem("test");
 		color.addItem("blackNblue");
+		color.addItem("glory");
+		color.addItem("boutique");
+		color.addItem("goldfish");
+		color.addItem("dreamy");
 		powerL.setText("Scale: ");
 		power.setEnabled(true);
 		zoom.setEnabled(true);
@@ -298,6 +335,17 @@ public class Menu extends Applet implements ActionListener, ItemListener {
 			} else if (sel.equals("Mandelbox")){
 				boxMenu();
 			}
+		}
+	}
+
+	@Override
+	public void run() {
+		while (rpThread != null) {
+		    repaint();
+		    try {
+		    	Thread.sleep(500);
+		    } catch (InterruptedException e) {
+		    }
 		}
 	}
 }

@@ -23,7 +23,7 @@ public class SwingInterface extends JPanel {
 	
 	private static final int X_SIZE = 800;
 	private static final int Y_SIZE = 600;
-	private static int pixelScale = 4;
+	private static int pixelScale = 2;
 	private static int castScale = 4;
 	
 	public SwingInterface() {
@@ -60,7 +60,7 @@ public class SwingInterface extends JPanel {
 					time = System.currentTimeMillis();
 				}
 				process_input();
-				Image img = createImage(renderer.renderC(X_SIZE, Y_SIZE, pixelScale, castScale));
+				Image img = createImage(renderer.renderE(X_SIZE, Y_SIZE, pixelScale, castScale));
 				BufferedImage buffer = new BufferedImage(X_SIZE, Y_SIZE, BufferedImage.TYPE_INT_ARGB);
 				Graphics2D g2 = buffer.createGraphics();
 				g2.drawImage(img,  0,  0,  null);
