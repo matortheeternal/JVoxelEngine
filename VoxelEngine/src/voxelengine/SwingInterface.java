@@ -23,7 +23,7 @@ public class SwingInterface extends JPanel {
 	
 	private static final int X_SIZE = 800;
 	private static final int Y_SIZE = 600;
-	private static int pixelScale = 2;
+	private static int pixelScale = 4;
 	private static int castScale = 4;
 	
 	public SwingInterface() {
