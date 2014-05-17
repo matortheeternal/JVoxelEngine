@@ -1,6 +1,5 @@
 package voxelengine;
 
-import java.applet.AudioClip;
 import java.awt.BorderLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -85,6 +84,12 @@ public class SwingInterface extends JPanel {
 			} else if (arguments[1].equals("Mandelbox")) {
 				System.out.println("Generating Mandelbox...");
 				world.generateMandelbox(arguments[2], Integer.parseInt(arguments[3]), Double.parseDouble(arguments[6]), Double.parseDouble(arguments[8]), Integer.parseInt(arguments[4]), Integer.parseInt(arguments[5]), Double.parseDouble(arguments[7]), offset, offset, offset);
+			} else if (arguments[1].equals("Greek Cross")) {
+				System.out.println("Generating Greek Cross Fractal...");
+				world.generateCross(arguments[2], Integer.parseInt(arguments[3]), offset, offset, offset, Integer.parseInt(arguments[6]), 0);
+			} else if (arguments[1].equals("Octahedron")) {
+				System.out.println("Generating Octahedron Fractal...");
+				world.generateOctahedron(arguments[2], Integer.parseInt(arguments[3]), offset, offset, offset, Integer.parseInt(arguments[6]));
 			}
 			System.out.println((Math.round((System.currentTimeMillis() - time)/10)/100.0)+" seconds spent generating world.");
 			time = System.currentTimeMillis();
@@ -129,10 +134,10 @@ public class SwingInterface extends JPanel {
 				camera.rotY += Math.PI / 32;
 			}
 			if (keyboard.isKeyDown('I')) {
-				camera.rotX -= Math.PI / 32;
+				camera.rotX += Math.PI / 32;
 			}
 			if (keyboard.isKeyDown('K')) {
-				camera.rotX += Math.PI / 32;
+				camera.rotX -= Math.PI / 32;
 			}
 			if (keyboard.isKeyDown('T')) {
 				pixelScale++;

@@ -1,0 +1,4 @@
+<html>
+<applet code="voxelengine.Menu.class" width="800" height="640">
+</applet> 
+</html>

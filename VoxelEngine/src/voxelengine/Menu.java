@@ -129,6 +129,8 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		choice.addItem("Menger Sponge");
 		choice.addItem("Mandelbulb");
 		choice.addItem("Mandelbox");
+		choice.addItem("Greek Cross");
+		choice.addItem("Octahedron");
 		choice.setMaximumSize(new Dimension(140, 40));
 		choice.setForeground(Color.LIGHT_GRAY);
 		choice.setBackground(Color.BLACK);
@@ -241,7 +243,58 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		color.addItem("white");
 		color.addItem("gray");
 		color.addItem("darkGray");
+		size.setText("81");
 		power.setEnabled(false);
+		zoom.setEnabled(false);
+		minIt.setEnabled(false);
+		maxIt.setEnabled(false);
+		cutoff.setEnabled(false);
+	}
+	
+	public void crossMenu() {
+		colorL.setText("Color: ");
+		color.removeAll();
+		color.addItem("red");
+		color.addItem("green");
+		color.addItem("blue");
+		color.addItem("yellow");
+		color.addItem("orange");
+		color.addItem("magenta");
+		color.addItem("pink");
+		color.addItem("cyan");
+		color.addItem("black");
+		color.addItem("white");
+		color.addItem("gray");
+		color.addItem("darkGray");
+		powerL.setText("Scale: ");
+		power.setText("3");
+		size.setText("63");
+		power.setEnabled(true);
+		zoom.setEnabled(false);
+		minIt.setEnabled(false);
+		maxIt.setEnabled(false);
+		cutoff.setEnabled(false);
+	}
+	
+	public void octahedronMenu() {
+		colorL.setText("Color: ");
+		color.removeAll();
+		color.addItem("red");
+		color.addItem("green");
+		color.addItem("blue");
+		color.addItem("yellow");
+		color.addItem("orange");
+		color.addItem("magenta");
+		color.addItem("pink");
+		color.addItem("cyan");
+		color.addItem("black");
+		color.addItem("white");
+		color.addItem("gray");
+		color.addItem("darkGray");
+		powerL.setText("Scale: ");
+		power.setText("7");
+		size.setText("63");
+		power.setEnabled(true);
 		zoom.setEnabled(false);
 		minIt.setEnabled(false);
 		maxIt.setEnabled(false);
@@ -258,6 +311,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		color.addItem("goldfish");
 		color.addItem("dreamy");
 		powerL.setText("Power: ");
+		size.setText("81");
 		power.setEnabled(true);
 		zoom.setEnabled(false);
 		minIt.setEnabled(true);
@@ -276,6 +330,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		color.addItem("goldfish");
 		color.addItem("dreamy");
 		powerL.setText("Scale: ");
+		size.setText("81");
 		power.setEnabled(true);
 		zoom.setEnabled(true);
 		minIt.setEnabled(true);
@@ -332,8 +387,12 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 				mengerMenu();
 			} else if (sel.equals("Mandelbulb")) {
 				bulbMenu();
-			} else if (sel.equals("Mandelbox")){
+			} else if (sel.equals("Mandelbox")) {
 				boxMenu();
+			} else if (sel.equals("Greek Cross")) {
+				crossMenu();
+			} else if (sel.equals("Octahedron")) {
+				octahedronMenu();
 			}
 		}
 	}

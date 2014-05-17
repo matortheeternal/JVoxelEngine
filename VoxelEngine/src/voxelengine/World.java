@@ -313,6 +313,75 @@ public class World {
 	    
 	    return output;
 	}
+    
+    // greek cross fractal
+    public void generateCross(String id, int d0, int xOffset, int yOffset, int zOffset, int scale, int mode) {
+    	int d1 = (d0 - 1)/2;
+        if ((Math.floor(d1) - d1 != 0) || (d1 < scale))
+            return;
+        // make cross
+        if (mode != 1) {
+            for (int x = 0; x < d0; x++) {
+                if (x == d1)
+                    continue;
+                setBlock(id, x + xOffset, d1 + yOffset, d1 + zOffset);
+            }
+        }
+        if (mode != 2) {
+            for (int y = 0; y < d0; y++) {
+                if (y == d1)
+                    continue;
+                setBlock(id, d1 + xOffset, y + yOffset, d1 + zOffset);
+            }
+        }
+        if (mode != 3) {
+            for (int z = 0; z < d0; z++) {
+                if (z == d1)
+                    continue;
+                setBlock(id, d1 + xOffset, d1 + yOffset, z + zOffset);
+            }
+        }
+        d1++;
+        // recursion close
+        generateCross(id, d1 - 1, 0 + xOffset, d1/2 + yOffset, d1/2 + zOffset, scale, 1);
+        generateCross(id, d1 - 1, d1/2 + xOffset, 0 + yOffset, d1/2 + zOffset, scale, 2);
+        generateCross(id, d1 - 1, d1/2 + xOffset, d1/2 + yOffset, 0 + zOffset, scale, 3);
+        // recursion far
+        generateCross(id, d1 - 1, d1 + xOffset, d1/2 + yOffset, d1/2 + zOffset, scale, 1);
+        generateCross(id, d1 - 1, d1/2 + xOffset, d1 + yOffset, d1/2 + zOffset, scale, 2);
+        generateCross(id, d1 - 1, d1/2 + xOffset, d1/2 + yOffset, d1 + zOffset, scale, 3);
+    }
+
+    // octahedron fractal
+    public void generateOctahedron(String id, int d0, int xOffset, int yOffset, int zOffset, int oscale) {
+        int d1 = (d0 - 1)/2;
+        int d2 = (d1 - 1)/2;
+        // create octahedron when minimum scale reached
+        if (d1 < oscale) {
+            int width = 0;
+            for (int y = 0; y < d0; y++) {
+                for (int z = 0; z < d0; z++) {
+                    for (int x = 0; x < d0; x++) {
+                        if (Math.abs(z - d1) + Math.abs(x - d1) <= width) {
+                            setBlock(id, x + xOffset, y + yOffset, z + zOffset);
+                        }
+                    }
+                }
+                if (y > d1 - 1) 
+                    width--;
+                else
+                    width++;
+            }
+        }
+        else { // recursion
+            generateOctahedron(id, d1, d2 + 1 + xOffset, d1 + 1 + yOffset, d2 + 1 + zOffset, oscale); // top octahedron
+            generateOctahedron(id, d1, d2 + 1 + xOffset, yOffset, d2 + 1 + zOffset, oscale); // bottom octahedron
+            generateOctahedron(id, d1, xOffset, d2 + 1 + yOffset, d2 + 1 + zOffset, oscale); // close right octahedron
+            generateOctahedron(id, d1, d2 + 1 + xOffset, d2 + 1 + yOffset, zOffset, oscale); // close left octahedron
+            generateOctahedron(id, d1, d2 + 1 + xOffset, d2 + 1 + yOffset, d1 + 1 + zOffset, oscale); // far right octahedron
+            generateOctahedron(id, d1, d1 + 1 + xOffset, d2 + 1 + yOffset, d2 + 1 + zOffset, oscale); // far left octahedron
+        }
+    }
 	
 	// palettes and block types
 	public void addColorBlockTypes() {

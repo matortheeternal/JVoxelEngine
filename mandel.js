@@ -291,7 +291,7 @@ function main() {
             return;
         }
         context.print("Generating a level "+d+" Dodecahedron Fractal... \n");
-        d = 20 * Math.pow(2 + gr, d - 1);
+        d = 30 * Math.pow(2 + gr, d - 1);
         context.print("Scale = "+d+"x"+d+"x"+d);
         dodecahedron(d, 0, 0, 0);
     }
