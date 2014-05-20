@@ -17,7 +17,7 @@ public class SwingInterface extends JPanel {
 	private Image src = null;
 	private World world;
 	private Renderer renderer;
-	private Camera camera = new Camera(0, 0, 0, 0, 0, 0, Math.PI/2);
+	private Camera camera = new Camera(0, 0, 0, 0, 0, 0, Math.PI/2, Math.PI/5);
 	private static String[] arguments;
 	
 	private static final int X_SIZE = 800;
@@ -59,7 +59,7 @@ public class SwingInterface extends JPanel {
 					time = System.currentTimeMillis();
 				}
 				process_input();
-				Image img = createImage(renderer.renderE(X_SIZE, Y_SIZE, pixelScale, castScale));
+				Image img = createImage(renderer.renderF(X_SIZE, Y_SIZE, pixelScale, castScale));
 				BufferedImage buffer = new BufferedImage(X_SIZE, Y_SIZE, BufferedImage.TYPE_INT_ARGB);
 				Graphics2D g2 = buffer.createGraphics();
 				g2.drawImage(img,  0,  0,  null);

@@ -7,10 +7,11 @@ public class Camera {
 	public double rotX;
 	public double rotY;
 	public double rotZ;
-	public double fov;
+	public double fovH;
+	public double fovV;
 	
 	// constructor
-	public Camera(double x, double y, double z, double rotY, double rotZ, double rotX, double fov) {
+	public Camera(double x, double y, double z, double rotY, double rotZ, double rotX, double fovH, double fovV) {
 		super();
 		this.x = x;
 		this.y = y;
@@ -18,6 +19,7 @@ public class Camera {
 		this.rotX = rotX;
 		this.rotY = rotY;
 		this.rotZ = rotZ;
-		this.fov = fov;
+		this.fovH = fovH;
+		this.fovV = fovV;
 	}
 }

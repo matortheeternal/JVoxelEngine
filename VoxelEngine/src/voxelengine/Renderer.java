@@ -135,9 +135,10 @@ public class Renderer {
 	private int raycastE(int px, int py, int width, int height, int castScale, double[][] ref) {
 		double w2 = width / 2;
 		double h2 = height / 2;
-		double fov = camera.fov / 2;
-		double yawr = ((px - w2) / w2) * fov;
-		double pitchr = ((py - h2) / h2) * fov * 0.5; // correction because view window isn't 1:1
+		double fovH = camera.fovH / 2;
+		double fovV = camera.fovV / 2;
+		double yawr = ((px - w2) / w2) * fovH;
+		double pitchr = ((py - h2) / h2) * fovV; // correction because view window isn't 1:1
 
 		double x1 = camera.x;
 		double y1 = camera.y;
@@ -146,11 +147,7 @@ public class Renderer {
 		int cx1, cy1, cz1, cx2, cy2, cz2;
 
 		double[] ray = new double[] { cos(pitchr) * cos(yawr), cos(pitchr) * sin(yawr), -sin(pitchr) };
-		ray = new double[] { 
-				ray[0] * ref[0][0] + ray[1] * ref[1][0] + ray[2] * ref[2][0],
-				ray[0] * ref[0][1] + ray[1] * ref[1][1] + ray[2] * ref[2][1],
-				ray[0] * ref[0][2] + ray[1] * ref[1][2] + ray[2] * ref[2][2], 
-			};
+		ray = new double[] { ray[0] * ref[0][0] + ray[1] * ref[1][0] + ray[2] * ref[2][0], ray[0] * ref[0][1] + ray[1] * ref[1][1] + ray[2] * ref[2][1], ray[0] * ref[0][2] + ray[1] * ref[1][2] + ray[2] * ref[2][2], };
 		double xs = ray[0] / castScale;
 		double ys = ray[1] / castScale;
 		double zs = ray[2] / castScale;
@@ -192,20 +189,19 @@ public class Renderer {
 
 		return SkyboxColor.getRGB();
 	}
-	
+
 	public MemoryImageSource renderF(int width, int height, int pixelScale, int castScale) {
 		int[] mem = new int[width * height];
 		double yaw = camera.rotY;
 		double pitch = camera.rotX;
-		double[][] ref = new double[][] { 
-				{ sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) }, 
-				{ -sin(yaw), cos(yaw), 0 }, // equal to cos(yaw + PI/2), sin(yaw + PI/2), 0
+		double[][] ref = new double[][] { { sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) }, { -sin(yaw), cos(yaw), 0 }, // equal to cos(yaw + PI/2), sin(yaw + PI/2), 0
 				{ cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), 2 * sin(pitch) } // cross product of the two vectors above
 		};
 
 		// raycast for each pixel
 		for (int py = 0; py < height - pixelScale; py += pixelScale) {
 			for (int px = 0; px < width - pixelScale; px += pixelScale) {
+				// if (camera.rotX != PI/2) System.out.println("Raycasting "+px+","+py);
 				if (pixelScale == 1)
 					mem[px + py * width] = raycastF(px, py, width, height, ref);
 				else {
@@ -222,14 +218,15 @@ public class Renderer {
 		// return image source
 		return new MemoryImageSource(width, height, mem, 0, width);
 	}
-	
+
 	private int raycastF(int px, int py, int width, int height, double[][] ref) {
-		double sv = 0.00000000001;
+		double sv = 0.00000001;
 		double w2 = width / 2;
 		double h2 = height / 2;
-		double fov = camera.fov / 2;
-		double yawr = ((px - w2) / w2) * fov;
-		double pitchr = ((py - h2) / h2) * fov * 0.5; // correction because view window isn't 1:1
+		double fovH = camera.fovH / 2;
+		double fovV = camera.fovV / 2;
+		double yawr = ((px - w2) / w2) * fovH;
+		double pitchr = ((py - h2) / h2) * fovV; // correction because view window isn't 1:1
 
 		double x1 = camera.x;
 		double y1 = camera.y;
@@ -239,19 +236,20 @@ public class Renderer {
 		double i1, i2, i3;
 
 		double[] ray = new double[] { cos(pitchr) * cos(yawr), cos(pitchr) * sin(yawr), -sin(pitchr) };
-		ray = new double[] { 
-				ray[0] * ref[0][0] + ray[1] * ref[1][0] + ray[2] * ref[2][0], 
-				ray[0] * ref[0][1] + ray[1] * ref[1][1] + ray[2] * ref[2][1], 
-				ray[0] * ref[0][2] + ray[1] * ref[1][2] + ray[2] * ref[2][2], 
-			};
+		ray = new double[] { ray[0] * ref[0][0] + ray[1] * ref[1][0] + ray[2] * ref[2][0], ray[0] * ref[0][1] + ray[1] * ref[1][1] + ray[2] * ref[2][1], ray[0] * ref[0][2] + ray[1] * ref[1][2] + ray[2] * ref[2][2], };
 		double xs = ray[0];
 		double ys = ray[1];
 		double zs = ray[2];
-		x1 += (x1 % 1.0 == 0) ? sv : 0;
-		y1 += (y1 % 1.0 == 0) ? sv : 0;
-		z1 += (z1 % 1.0 == 0) ? sv : 0;
 
 		while (inBoundsC(x1, y1, z1)) {
+			// add/subtract sv if we're on a border exactly
+			if (x1 % 1.0 == 0)
+				x1 += (xs > 0) ? sv : -sv;
+			if (y1 % 1.0 == 0)
+				y1 += (ys > 0) ? sv : -sv;
+			if (z1 % 1.0 == 0)
+				z1 += (zs > 0) ? sv : -sv;
+
 			// chunk processing
 			cx1 = (int) (x1 / 16.0);
 			cy1 = (int) (y1 / 16.0);
@@ -307,7 +305,7 @@ public class Renderer {
 				z1 += zs * (i3 + sv);
 			}
 		}
-		
+
 		return SkyboxColor.getRGB();
 	}
 
