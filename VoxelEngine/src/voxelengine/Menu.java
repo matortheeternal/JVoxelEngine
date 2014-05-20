@@ -64,10 +64,6 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	}
 	
 	public void paint(Graphics g) {
-		if (System.currentTimeMillis() - time >= ttime) {
-			time = System.currentTimeMillis();
-			ndx = (ndx + 1) % 9;
-		}
 		g.drawImage(slideshow[ndx], 0, 0, this);
 	}
 
@@ -331,6 +327,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		color.addItem("dreamy");
 		powerL.setText("Scale: ");
 		size.setText("81");
+		power.setText("1.5");
 		power.setEnabled(true);
 		zoom.setEnabled(true);
 		minIt.setEnabled(true);
@@ -400,11 +397,15 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	@Override
 	public void run() {
 		while (rpThread != null) {
-		    repaint();
+			if (System.currentTimeMillis() - time >= ttime) {
+				time = System.currentTimeMillis();
+				ndx = (ndx + 1) % 9;
+			}
 		    try {
 		    	Thread.sleep(500);
 		    } catch (InterruptedException e) {
 		    }
+		    paint(this.getGraphics());
 		}
 	}
 }
