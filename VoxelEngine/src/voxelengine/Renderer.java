@@ -1,8 +1,10 @@
 package voxelengine;
 
-import java.awt.Color;
-import java.awt.image.MemoryImageSource;
 import static java.lang.Math.*;
+
+import java.awt.*;
+import java.awt.image.*;
+import java.util.concurrent.*;
 
 public class Renderer {
 	private World world;
@@ -320,26 +322,35 @@ public class Renderer {
 		};
 
 		// raycast for each pixel
+		ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		for (int py = 0; py < height - pixelScale; py += pixelScale) {
 			for (int px = 0; px < width - pixelScale; px += pixelScale) {
 				if (pixelScale == 1)
-					mem[px + py * width] = raycastG(px, py, width, height, castScale, ref);
+					service.execute(new PixelWorker(mem, new int[] { px + py * width }, px, py, width, height, ref));
 				else {
-					int val = raycastG(px, py, width, height, castScale, ref);
+					int[] fbIndices = new int[pixelScale * pixelScale];
 					for (int pys = 0; pys < pixelScale; ++pys) {
 						for (int pxs = 0; pxs < pixelScale; ++pxs) {
-							mem[px + pxs + (py + pys) * width] = val;
+							fbIndices[pys * pixelScale + pxs] = px + pxs + (py + pys) * width;
 						}
 					}
+					service.execute(new PixelWorker(mem, fbIndices, px, py, width, height, ref));
 				}
 			}
+		}
+		try {
+			service.shutdown();
+			service.awaitTermination(1, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 		// return image source
 		return new MemoryImageSource(width, height, mem, 0, width);
 	}
 
-	private int raycastG(int px, int py, int width, int height, int castScale, double[][] ref) {
+	private int raycastG(int px, int py, int width, int height, double[][] ref) {
 		double w2 = width / 2.0;
 		double h2 = height / 2.0;
 
@@ -431,5 +442,37 @@ public class Renderer {
 
 		// return calculated color
 		return new Color(red, green, blue);
+	}
+
+	private class PixelWorker implements Runnable {
+
+		private int[] framebuffer;
+		private int[] fbIndices;
+		private int px;
+		private int py;
+		private int width;
+		private int height;
+		private double[][] ref;
+
+		public PixelWorker(int[] framebuffer, int[] fbIndices, int px, int py, int width, int height, double[][] ref) {
+			this.framebuffer = framebuffer;
+			this.fbIndices = fbIndices;
+			this.px = px;
+			this.py = py;
+			this.width = width;
+			this.height = height;
+			this.ref = ref;
+		}
+
+		@Override
+		public void run() {
+			int result = Renderer.this.raycastG(px, py, width, height, ref);
+			synchronized (framebuffer) {
+				for (int index : fbIndices) {
+					framebuffer[index] = result;
+				}
+			}
+		}
+
 	}
 }
