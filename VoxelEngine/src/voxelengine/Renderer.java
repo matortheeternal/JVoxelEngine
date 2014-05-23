@@ -309,6 +309,114 @@ public class Renderer {
 		return SkyboxColor.getRGB();
 	}
 
+	public MemoryImageSource renderG(int width, int height, int pixelScale, int castScale) {
+		int[] mem = new int[width * height];
+		double yaw = camera.rotY;
+		double pitch = camera.rotX;
+		double[][] ref = new double[][] { { sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) },
+				{ -sin(yaw), cos(yaw), 0 }, // equal to cos(yaw + PI/2), sin(yaw + PI/2), 0
+				{ cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), 2 * sin(pitch) } // cross product of the two vectors
+																					// above
+		};
+
+		// raycast for each pixel
+		for (int py = 0; py < height - pixelScale; py += pixelScale) {
+			for (int px = 0; px < width - pixelScale; px += pixelScale) {
+				if (pixelScale == 1)
+					mem[px + py * width] = raycastG(px, py, width, height, castScale, ref);
+				else {
+					int val = raycastG(px, py, width, height, castScale, ref);
+					for (int pys = 0; pys < pixelScale; ++pys) {
+						for (int pxs = 0; pxs < pixelScale; ++pxs) {
+							mem[px + pxs + (py + pys) * width] = val;
+						}
+					}
+				}
+			}
+		}
+
+		// return image source
+		return new MemoryImageSource(width, height, mem, 0, width);
+	}
+
+	private int raycastG(int px, int py, int width, int height, int castScale, double[][] ref) {
+		double w2 = width / 2.0;
+		double h2 = height / 2.0;
+
+		double x = camera.x;
+		double y = camera.y;
+		double z = camera.z;
+
+		double fovH = camera.fovH / 2;
+		double fovV = camera.fovV / 2;
+		double yawr = ((px - w2) / w2) * fovH;
+		double pitchr = ((py - h2) / h2) * fovV; // correction because view window isn't 1:1
+
+		double[] ray = new double[] { cos(pitchr) * cos(yawr), cos(pitchr) * sin(yawr), -sin(pitchr) };
+		ray = new double[] { ray[0] * ref[0][0] + ray[1] * ref[1][0] + ray[2] * ref[2][0],
+				ray[0] * ref[0][1] + ray[1] * ref[1][1] + ray[2] * ref[2][1],
+				ray[0] * ref[0][2] + ray[1] * ref[1][2] + ray[2] * ref[2][2], };
+
+		double dx = ray[0] * renderDistance * 16;
+		double dy = ray[1] * renderDistance * 16;
+		double dz = ray[2] * renderDistance * 16;
+
+		double exy, exz, ezy, ax, ay, az, bx, by, bz;
+
+		int sx, sy, sz, n;
+
+		sx = (int) Math.signum(dx);
+		sy = (int) Math.signum(dy);
+		sz = (int) Math.signum(dz);
+
+		ax = Math.abs(dx);
+		ay = Math.abs(dy);
+		az = Math.abs(dz);
+
+		bx = 2 * ax;
+		by = 2 * ay;
+		bz = 2 * az;
+
+		exy = ay - ax;
+		exz = az - ax;
+		ezy = ay - az;
+
+		n = (int) (ax + ay + az);
+
+		while (n-- != 0) {
+			Block block = world.getBlock(x, y, z);
+			if (block != null) {
+				Color c = block.getType().getColor();
+				c = CalculateColor(c, camera.x, x, camera.y, y, camera.z, z);
+				return c.getRGB();
+			}
+
+			if (exy < 0) {
+				if (exz < 0) {
+					x += sx;
+					exy += by;
+					exz += bz;
+				} else {
+					z += sz;
+					exz -= bx;
+					ezy += by;
+				}
+			} else {
+				if (ezy < 0) {
+					z += sz;
+					exz -= bx;
+					ezy += by;
+				} else {
+					y += sy;
+					exy -= bx;
+					ezy -= bz;
+				}
+			}
+		}
+
+		return SkyboxColor.getRGB();
+	}
+
 	private Color CalculateColor(Color c, double x1, double x2, double y1, double y2, double z1, double z2) {
 		double distance = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2) + Math.pow(z1 - z2, 2));
 		double lightIntensity = falloff / Math.pow(distance, rate);
