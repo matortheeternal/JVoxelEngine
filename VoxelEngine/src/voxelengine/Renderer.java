@@ -9,8 +9,9 @@ import java.util.concurrent.*;
 public class Renderer {
 	private World world;
 	private Color SkyboxColor = Color.BLACK;
-	private double falloff = 8.0;
-	private double rate = 0.85;
+	private double falloff = 4.0;
+	private double rate = 0.6;
+	private double ambientIntensity = 0.2;
 	private int renderDistance = 8;
 	public Camera camera;
 
@@ -412,26 +413,32 @@ public class Renderer {
 
 		n = (int) (Math.abs(dx) + Math.abs(dy) + Math.abs(dz));
 
+		int face = -1;
+
 		while (n-- != 0) {
 			Block block = world.getBlock(x, y, z);
 			if (block != null) {
 				Color c = block.getType().getColor();
-				c = CalculateColor(c, camera.x, x, camera.y, y, camera.z, z);
+				c = CalculateColor(c, camera.x, x, camera.y, y, camera.z, z, face);
 				return c.getRGB();
 			}
 			if (tMaxX < tMaxY) {
 				if (tMaxX < tMaxZ) {
+					face = 0;
 					x += sx;
 					tMaxX += tDeltaX;
 				} else {
+					face = 2;
 					z += sz;
 					tMaxZ += tDeltaZ;
 				}
 			} else {
 				if (tMaxY < tMaxZ) {
+					face = 1;
 					y += sy;
 					tMaxY += tDeltaY;
 				} else {
+					face = 2;
 					z += sz;
 					tMaxZ += tDeltaZ;
 				}
@@ -444,6 +451,39 @@ public class Renderer {
 	private Color CalculateColor(Color c, double x1, double x2, double y1, double y2, double z1, double z2) {
 		double distance = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2) + Math.pow(z1 - z2, 2));
 		double lightIntensity = falloff / Math.pow(distance, rate);
+
+		// calculate color components
+		int red = (int) (c.getRed() * lightIntensity);
+		red = (red > 255) ? 255 : red;
+		int green = (int) (c.getGreen() * lightIntensity);
+		green = (green > 255) ? 255 : green;
+		int blue = (int) (c.getBlue() * lightIntensity);
+		blue = (blue > 255) ? 255 : blue;
+
+		// return calculated color
+		return new Color(red, green, blue);
+	}
+
+	private Color CalculateColor(Color c, double x1, double x2, double y1, double y2, double z1, double z2, int face) {
+		double ray[] = { x1 - x2, y1 - y2, z1 - z2 };
+		double distance = Math.sqrt(ray[0] * ray[0] + ray[1] * ray[1] + ray[2] * ray[2]);
+		ray[0] /= distance;
+		ray[1] /= distance;
+		ray[2] /= distance;
+		double dot = 0;
+		switch (face) {
+		case 0:
+			dot = Math.abs(ray[0]);
+			break;
+		case 1:
+			dot = Math.abs(ray[1]);
+			break;
+		case 2:
+			dot = Math.abs(ray[2]);
+			break;
+		}
+		double diffuseIntensity = Math.max(falloff / Math.pow(distance, rate), 1.0) * dot;
+		double lightIntensity = ambientIntensity + (1 - ambientIntensity) * diffuseIntensity;
 
 		// calculate color components
 		int red = (int) (c.getRed() * lightIntensity);
