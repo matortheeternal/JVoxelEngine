@@ -24,7 +24,9 @@ public class SwingInterface extends JPanel {
 	private static final int Y_SIZE = 600;
 	private static int pixelScale = 4;
 	private static int castScale = 4;
-	
+
+	private static boolean doShadows = false;
+
 	public SwingInterface() {
 		new Worker().execute();
 	}
@@ -62,7 +64,7 @@ public class SwingInterface extends JPanel {
 				}
 				process_input((System.nanoTime() - lastFrameNanos) / 1000000000.0);
 				lastFrameNanos = System.nanoTime();
-				Image img = createImage(renderer.renderG(X_SIZE, Y_SIZE, pixelScale, castScale));
+				Image img = createImage(renderer.renderG(X_SIZE, Y_SIZE, pixelScale, castScale, doShadows));
 				BufferedImage buffer = new BufferedImage(X_SIZE, Y_SIZE, BufferedImage.TYPE_INT_ARGB);
 				Graphics2D g2 = buffer.createGraphics();
 				g2.drawImage(img, 0, 0, null);
@@ -156,6 +158,13 @@ public class SwingInterface extends JPanel {
 			}
 			if (keyboard.isKeyDown('H')) {
 				castScale--;
+			}
+			if (keyboard.isKeyDown('P')) { // P is for pretty
+				doShadows = true;
+				pixelScale = 1;
+			} else {
+				doShadows = false;
+				pixelScale = 4;
 			}
 			camera.rotY = camera.rotY % (Math.PI * 2);
 			camera.rotX = Math.max(Math.min(camera.rotX, Math.PI), 0);
