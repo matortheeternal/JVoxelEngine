@@ -9,8 +9,10 @@ import java.util.concurrent.*;
 public class Renderer {
 	private World world;
 	private Color SkyboxColor = Color.BLACK;
-	private double falloff = 8.0;
-	private double rate = 0.85;
+	private double falloff = 4.0;
+	private double rate = 0.6;
+	private double ambientIntensity = 0.2;
+	private double directionalIntensity = 0.3;
 	private int renderDistance = 8;
 	public Camera camera;
 
@@ -311,8 +313,13 @@ public class Renderer {
 		return SkyboxColor.getRGB();
 	}
 
-	public MemoryImageSource renderG(int width, int height, int pixelScale, int castScale) {
-		int[] mem = new int[width * height];
+	int[] mem = new int[0];
+	MemoryImageSource fb;
+
+	public MemoryImageSource renderG(int width, int height, int pixelScale, int castScale, boolean doShadows) {
+		if (mem.length != width * height) {
+			mem = new int[width * height]; // this is very marginally faster than recreating it every frame
+		}
 		double yaw = camera.rotY;
 		double pitch = camera.rotX;
 		double[][] ref = new double[][] { { sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) },
@@ -325,32 +332,38 @@ public class Renderer {
 		ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		for (int py = 0; py < height - pixelScale; py += pixelScale) {
 			for (int px = 0; px < width - pixelScale; px += pixelScale) {
-				if (pixelScale == 1)
-					service.execute(new PixelWorker(mem, new int[] { px + py * width }, px, py, width, height, ref));
-				else {
+				if (pixelScale == 1) {
+					service.execute(new PixelWorker(mem, new int[] { px + py * width }, px, py, width, height, ref,
+							doShadows));
+				} else {
 					int[] fbIndices = new int[pixelScale * pixelScale];
 					for (int pys = 0; pys < pixelScale; ++pys) {
 						for (int pxs = 0; pxs < pixelScale; ++pxs) {
 							fbIndices[pys * pixelScale + pxs] = px + pxs + (py + pys) * width;
 						}
 					}
-					service.execute(new PixelWorker(mem, fbIndices, px, py, width, height, ref));
+					service.execute(new PixelWorker(mem, fbIndices, px, py, width, height, ref, doShadows));
 				}
 			}
 		}
 		try {
 			service.shutdown();
-			service.awaitTermination(1, TimeUnit.SECONDS);
+			service.awaitTermination(10, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		if (fb == null) {
+			fb = new MemoryImageSource(width, height, mem, 0, width);
+		} else {
+			fb.newPixels(); // this is very marginally faster than recreating it
+		}
 
 		// return image source
-		return new MemoryImageSource(width, height, mem, 0, width);
+		return fb;
 	}
 
-	private int raycastG(int px, int py, int width, int height, double[][] ref) {
+	private RayCastCollision raycastGScreenCoords(int px, int py, int width, int height, double[][] ref) {
 		double w2 = width / 2.0;
 		double h2 = height / 2.0;
 
@@ -368,69 +381,134 @@ public class Renderer {
 				ray[0] * ref[0][1] + ray[1] * ref[1][1] + ray[2] * ref[2][1],
 				ray[0] * ref[0][2] + ray[1] * ref[1][2] + ray[2] * ref[2][2], };
 
+		return raycastG(x, y, z, ray);
+	}
+
+	private RayCastCollision raycastG(double x, double y, double z, double[] ray) {
+
+		double startX = x;
+		double startY = y;
+		double startZ = z;
+
 		double dx = ray[0] * renderDistance * 16;
 		double dy = ray[1] * renderDistance * 16;
 		double dz = ray[2] * renderDistance * 16;
 
-		double exy, exz, ezy, ax, ay, az, bx, by, bz;
+		double rayMagnitude = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+		double ax, ay, az;
 
 		int sx, sy, sz, n;
+
+		double sv = Double.MIN_NORMAL;
 
 		sx = (int) Math.signum(dx);
 		sy = (int) Math.signum(dy);
 		sz = (int) Math.signum(dz);
 
-		ax = Math.abs(dx);
-		ay = Math.abs(dy);
-		az = Math.abs(dz);
+		ax = Math.abs(dx) / rayMagnitude;
+		ay = Math.abs(dy) / rayMagnitude;
+		az = Math.abs(dz) / rayMagnitude;
 
-		bx = 2 * ax;
-		by = 2 * ay;
-		bz = 2 * az;
+		ax = ((ax > sv) ? ax : sv);
+		ay = ((ay > sv) ? ay : sv);
+		az = ((az > sv) ? az : sv);
 
-		exy = ay - ax;
-		exz = az - ax;
-		ezy = ay - az;
+		double tDeltaX = 1 / ax;
+		double tDeltaY = 1 / ay;
+		double tDeltaZ = 1 / az;
 
-		n = (int) (ax + ay + az);
+		double tMaxX = Math.abs((sx == 1) ? (1 - (x % 1.0)) : (x % 1.0)) / ax;
+		double tMaxY = Math.abs((sy == 1) ? (1 - (y % 1.0)) : (y % 1.0)) / ay;
+		double tMaxZ = Math.abs((sz == 1) ? (1 - (z % 1.0)) : (z % 1.0)) / az;
+
+		n = (int) (Math.abs(dx) + Math.abs(dy) + Math.abs(dz));
+
+		int face = -1;
 
 		while (n-- != 0) {
-			Block block = world.getBlock(x, y, z);
-			if (block != null) {
-				Color c = block.getType().getColor();
-				c = CalculateColor(c, camera.x, x, camera.y, y, camera.z, z);
-				return c.getRGB();
-			}
-
-			if (exy < 0) {
-				if (exz < 0) {
+			if (tMaxX < tMaxY) {
+				if (tMaxX < tMaxZ) {
+					face = 0;
 					x += sx;
-					exy += by;
-					exz += bz;
+					tMaxX += tDeltaX;
 				} else {
+					face = 2;
 					z += sz;
-					exz -= bx;
-					ezy += by;
+					tMaxZ += tDeltaZ;
 				}
 			} else {
-				if (ezy < 0) {
-					z += sz;
-					exz -= bx;
-					ezy += by;
-				} else {
+				if (tMaxY < tMaxZ) {
+					face = 1;
 					y += sy;
-					exy -= bx;
-					ezy -= bz;
+					tMaxY += tDeltaY;
+				} else {
+					face = 2;
+					z += sz;
+					tMaxZ += tDeltaZ;
 				}
+			}
+			Block block = world.getBlock(x, y, z);
+			if (block != null) {
+				double t = 0;
+				switch (face) {
+				case 0:
+					t = tMaxX - tDeltaX - 0.01;
+					break;
+				case 1:
+					t = tMaxY - tDeltaY - 0.01;
+					break;
+				case 2:
+					t = tMaxZ - tDeltaZ - 0.01;
+					break;
+				}
+				return new RayCastCollision(block, face, t * dx / rayMagnitude + startX,
+						t * dy / rayMagnitude + startY, t * dz / rayMagnitude + startZ);
 			}
 		}
 
-		return SkyboxColor.getRGB();
+		return null;
 	}
 
 	private Color CalculateColor(Color c, double x1, double x2, double y1, double y2, double z1, double z2) {
 		double distance = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2) + Math.pow(z1 - z2, 2));
 		double lightIntensity = falloff / Math.pow(distance, rate);
+
+		// calculate color components
+		int red = (int) (c.getRed() * lightIntensity);
+		red = (red > 255) ? 255 : red;
+		int green = (int) (c.getGreen() * lightIntensity);
+		green = (green > 255) ? 255 : green;
+		int blue = (int) (c.getBlue() * lightIntensity);
+		blue = (blue > 255) ? 255 : blue;
+
+		// return calculated color
+		return new Color(red, green, blue);
+	}
+
+	private Color CalculateColor(Color c, double x1, double x2, double y1, double y2, double z1, double z2, int face,
+			double directionalDot) {
+		double ray[] = { x1 - x2, y1 - y2, z1 - z2 };
+		double distance = Math.sqrt(ray[0] * ray[0] + ray[1] * ray[1] + ray[2] * ray[2]);
+		ray[0] /= distance;
+		ray[1] /= distance;
+		ray[2] /= distance;
+		double dot = 0;
+		switch (face) {
+		case 0:
+			dot = Math.abs(ray[0]);
+			break;
+		case 1:
+			dot = Math.abs(ray[1]);
+			break;
+		case 2:
+			dot = Math.abs(ray[2]);
+			break;
+		}
+		double diffuseIntensity = Math.max(falloff / Math.pow(distance, rate), 1.0) * dot;
+		double lightIntensity = ambientIntensity + (1 - ambientIntensity - directionalIntensity) * diffuseIntensity;
+
+		lightIntensity += directionalIntensity * directionalDot;
 
 		// calculate color components
 		int red = (int) (c.getRed() * lightIntensity);
@@ -453,8 +531,10 @@ public class Renderer {
 		private int width;
 		private int height;
 		private double[][] ref;
+		private boolean doShadows;
 
-		public PixelWorker(int[] framebuffer, int[] fbIndices, int px, int py, int width, int height, double[][] ref) {
+		public PixelWorker(int[] framebuffer, int[] fbIndices, int px, int py, int width, int height, double[][] ref,
+				boolean doShadows) {
 			this.framebuffer = framebuffer;
 			this.fbIndices = fbIndices;
 			this.px = px;
@@ -462,14 +542,48 @@ public class Renderer {
 			this.width = width;
 			this.height = height;
 			this.ref = ref;
+			this.doShadows = doShadows;
 		}
+
+		double[] lightRay = { renderDistance * 8, renderDistance * 2, renderDistance * 4 };
 
 		@Override
 		public void run() {
-			int result = Renderer.this.raycastG(px, py, width, height, ref);
+			RayCastCollision result = Renderer.this.raycastGScreenCoords(px, py, width, height, ref);
+			Color c;
+			double lightRayMagnitude = Math.sqrt(lightRay[0] * lightRay[0] + lightRay[1] * lightRay[1] + lightRay[2]
+					* lightRay[2]);
+			if (result != null) {
+				Block block = result.getCollisionBlock();
+				double x = result.getX();
+				double y = result.getY();
+				double z = result.getZ();
+				double lightDot = 0;
+				if (doShadows) {
+					RayCastCollision lightOcclusion = Renderer.this.raycastG(result.getX(), result.getY(),
+							result.getZ(), lightRay);
+					if (lightOcclusion == null) {
+						switch (result.getFace()) {
+						case 0:
+							lightDot = Math.abs(lightRay[0] / lightRayMagnitude);
+							break;
+						case 1:
+							lightDot = Math.abs(lightRay[1] / lightRayMagnitude);
+							break;
+						case 2:
+							lightDot = Math.abs(lightRay[2] / lightRayMagnitude);
+							break;
+						}
+					}
+				}
+				c = Renderer.this.CalculateColor(block.getType().getColor(), camera.x, x, camera.y, y, camera.z, z,
+						result.getFace(), lightDot);
+			} else {
+				c = SkyboxColor;
+			}
 			synchronized (framebuffer) {
 				for (int index : fbIndices) {
-					framebuffer[index] = result;
+					framebuffer[index] = c.getRGB();
 				}
 			}
 		}

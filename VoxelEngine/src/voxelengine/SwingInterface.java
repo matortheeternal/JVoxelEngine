@@ -24,7 +24,9 @@ public class SwingInterface extends JPanel {
 	private static final int Y_SIZE = 600;
 	private static int pixelScale = 4;
 	private static int castScale = 4;
-	
+
+	private static boolean doShadows = false;
+
 	public SwingInterface() {
 		new Worker().execute();
 	}
@@ -48,7 +50,9 @@ public class SwingInterface extends JPanel {
 			set_up();
 			int frames = 0;
 			long time = System.currentTimeMillis();
-			
+
+			long lastFrameNanos = System.nanoTime();
+
 			while (true) {
 				frames++;
 				if (frames == 30) {
@@ -58,11 +62,12 @@ public class SwingInterface extends JPanel {
 					frames = 0;
 					time = System.currentTimeMillis();
 				}
-				process_input();
-				Image img = createImage(renderer.renderF(X_SIZE, Y_SIZE, pixelScale, castScale));
+				process_input((System.nanoTime() - lastFrameNanos) / 1000000000.0);
+				lastFrameNanos = System.nanoTime();
+				Image img = createImage(renderer.renderG(X_SIZE, Y_SIZE, pixelScale, castScale, doShadows));
 				BufferedImage buffer = new BufferedImage(X_SIZE, Y_SIZE, BufferedImage.TYPE_INT_ARGB);
 				Graphics2D g2 = buffer.createGraphics();
-				g2.drawImage(img,  0,  0,  null);
+				g2.drawImage(img, 0, 0, null);
 				g2.dispose();
 				publish(buffer);
 			}
@@ -103,41 +108,44 @@ public class SwingInterface extends JPanel {
 			renderer = new Renderer(world, camera);
 			System.out.println("World set up.  Now rendering...");
 		}
-		
-		private void process_input() {
+
+		private void process_input(double timestep) {
+			final int movement_scale = 15;
+			final int rotation_scale = 15;
+
 			if (keyboard.isKeyDown('A')) {
-				camera.x += Math.cos(camera.rotY - Math.PI / 2);
-				camera.y += Math.sin(camera.rotY - Math.PI / 2);
+				camera.x += timestep * movement_scale * Math.cos(camera.rotY - Math.PI / 2);
+				camera.y += timestep * movement_scale * Math.sin(camera.rotY - Math.PI / 2);
 			}
 			if (keyboard.isKeyDown('D')) {
-				camera.x += Math.cos(camera.rotY + Math.PI / 2);
-				camera.y += Math.sin(camera.rotY + Math.PI / 2);
+				camera.x += timestep * movement_scale * Math.cos(camera.rotY + Math.PI / 2);
+				camera.y += timestep * movement_scale * Math.sin(camera.rotY + Math.PI / 2);
 			}
 			if (keyboard.isKeyDown('W')) {
-				camera.x += Math.cos(camera.rotY);
-				camera.y += Math.sin(camera.rotY);
+				camera.x += timestep * movement_scale * Math.cos(camera.rotY);
+				camera.y += timestep * movement_scale * Math.sin(camera.rotY);
 			}
 			if (keyboard.isKeyDown('S')) {
-				camera.x += Math.cos(camera.rotY + Math.PI);
-				camera.y += Math.sin(camera.rotY + Math.PI);
+				camera.x += timestep * movement_scale * Math.cos(camera.rotY + Math.PI);
+				camera.y += timestep * movement_scale * Math.sin(camera.rotY + Math.PI);
 			}
 			if (keyboard.isKeyDown('Q')) {
-				camera.z -= 1;
+				camera.z -= timestep * movement_scale;
 			}
 			if (keyboard.isKeyDown('E')) {
-				camera.z += 1;
+				camera.z += timestep * movement_scale;
 			}
 			if (keyboard.isKeyDown('J')) {
-				camera.rotY -= Math.PI / 32;
+				camera.rotY -= timestep * rotation_scale * Math.PI / 32;
 			}
 			if (keyboard.isKeyDown('L')) {
-				camera.rotY += Math.PI / 32;
+				camera.rotY += timestep * rotation_scale * Math.PI / 32;
 			}
 			if (keyboard.isKeyDown('I')) {
-				camera.rotX += Math.PI / 32;
+				camera.rotX += timestep * rotation_scale * Math.PI / 32;
 			}
 			if (keyboard.isKeyDown('K')) {
-				camera.rotX -= Math.PI / 32;
+				camera.rotX -= timestep * rotation_scale * Math.PI / 32;
 			}
 			if (keyboard.isKeyDown('T')) {
 				pixelScale++;
@@ -150,6 +158,13 @@ public class SwingInterface extends JPanel {
 			}
 			if (keyboard.isKeyDown('H')) {
 				castScale--;
+			}
+			if (keyboard.isKeyDown('P')) { // P is for pretty
+				doShadows = true;
+				pixelScale = 1;
+			} else {
+				doShadows = false;
+				pixelScale = 4;
 			}
 			camera.rotY = camera.rotY % (Math.PI * 2);
 			camera.rotX = Math.max(Math.min(camera.rotX, Math.PI), 0);
