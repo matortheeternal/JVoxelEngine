@@ -82,7 +82,8 @@ public class SwingInterface extends JPanel {
 			long time = System.currentTimeMillis();
 			if (arguments[1].equals("Menger Sponge")) {
 				System.out.println("Generating Menger Sponge...");
-				world.generateMengerSponge(arguments[2], Integer.parseInt(arguments[3]), offset, offset, offset);
+				Byte b = (byte) world.getByteFromName(arguments[2]);
+				world.generateMengerSponge(b, Integer.parseInt(arguments[3]), offset, offset, offset);
 			} else if (arguments[1].equals("Mandelbulb")) {
 				System.out.println("Generating Mandelbulb...");
 				world.generateMandelbulb(arguments[2], Integer.parseInt(arguments[3]), Double.parseDouble(arguments[6]), Double.parseDouble(arguments[8]), offset, offset, offset, Integer.parseInt(arguments[4]), Integer.parseInt(arguments[5]));
@@ -91,10 +92,15 @@ public class SwingInterface extends JPanel {
 				world.generateMandelbox(arguments[2], Integer.parseInt(arguments[3]), Double.parseDouble(arguments[6]), Double.parseDouble(arguments[8]), Integer.parseInt(arguments[4]), Integer.parseInt(arguments[5]), Double.parseDouble(arguments[7]), offset, offset, offset);
 			} else if (arguments[1].equals("Greek Cross")) {
 				System.out.println("Generating Greek Cross Fractal...");
-				world.generateCross(arguments[2], Integer.parseInt(arguments[3]), offset, offset, offset, Integer.parseInt(arguments[6]), 0);
+				Byte b = (byte) world.getByteFromName(arguments[2]);
+				world.generateCross(b, Integer.parseInt(arguments[3]), offset, offset, offset, Integer.parseInt(arguments[6]), 0);
 			} else if (arguments[1].equals("Octahedron")) {
 				System.out.println("Generating Octahedron Fractal...");
-				world.generateOctahedron(arguments[2], Integer.parseInt(arguments[3]), offset, offset, offset, Integer.parseInt(arguments[6]));
+				Byte b = (byte) world.getByteFromName(arguments[2]);
+				world.generateOctahedron(b, Integer.parseInt(arguments[3]), offset, offset, offset, Integer.parseInt(arguments[6]));
+			} else if (arguments[1].equals("Load")) {
+				System.out.println("Loading an existing world...");
+				world.load(arguments[6]);
 			}
 			System.out.println((Math.round((System.currentTimeMillis() - time)/10)/100.0)+" seconds spent generating world.");
 			time = System.currentTimeMillis();

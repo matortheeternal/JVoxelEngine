@@ -1,18 +1,18 @@
 package voxelengine;
 
-public class Palette {
+public class BytePalette {
 	private String name;
-	private String[] palette;
+	private byte[] palette;
 	
 	// constructor
-	public Palette(String name, String[] palette) {
+	public BytePalette(String name, byte[] palette) {
 		super();
 		this.name = name;
 		this.palette = palette;
 	}
 	
 	// methods
-	public String get(int index) {
+	public byte get(int index) {
 		return palette[index];
 	}
 	public String getName() {

@@ -80,9 +80,9 @@ public class Renderer {
 			}
 
 			// block processing
-			Block block = world.getBlock(x1, y1, z1);
-			if (block != null) {
-				Color c = block.getType().getColor();
+			byte block = world.getBlock(x1, y1, z1);
+			if (block != 0) {
+				Color c = world.getType(block).getColor();
 				c = CalculateColor(c, camera.x, x1, camera.y, y1, camera.z, z1);
 				return c.getRGB();
 			}
@@ -112,8 +112,22 @@ public class Renderer {
 		int[] mem = new int[width * height];
 		double yaw = camera.rotY;
 		double pitch = camera.rotX;
-		double[][] ref = new double[][] { { sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) }, { -sin(yaw), cos(yaw), 0 }, // equal to cos(yaw + PI/2), sin(yaw + PI/2), 0
-				{ cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), 2 * sin(pitch) } // cross product of the two vectors above
+		double[][] ref = new double[][] { { sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) }, { -sin(yaw), cos(yaw), 0 }, // equal
+																																		// to
+																																		// cos(yaw
+																																		// +
+																																		// PI/2),
+																																		// sin(yaw
+																																		// +
+																																		// PI/2),
+																																		// 0
+				{ cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), 2 * sin(pitch) } // cross
+																					// product
+																					// of
+																					// the
+																					// two
+																					// vectors
+																					// above
 		};
 
 		// raycast for each pixel
@@ -142,7 +156,8 @@ public class Renderer {
 		double fovH = camera.fovH / 2;
 		double fovV = camera.fovV / 2;
 		double yawr = ((px - w2) / w2) * fovH;
-		double pitchr = ((py - h2) / h2) * fovV; // correction because view window isn't 1:1
+		double pitchr = ((py - h2) / h2) * fovV; // correction because view
+													// window isn't 1:1
 
 		double x1 = camera.x;
 		double y1 = camera.y;
@@ -174,9 +189,9 @@ public class Renderer {
 			}
 
 			// block processing
-			Block block = world.getBlock(x1, y1, z1);
-			if (block != null) {
-				Color c = block.getType().getColor();
+			byte block = world.getBlock(x1, y1, z1);
+			if (block != 0) {
+				Color c = world.getType(block).getColor();
 				c = CalculateColor(c, camera.x, x1, camera.y, y1, camera.z, z1);
 				return c.getRGB();
 			}
@@ -198,14 +213,17 @@ public class Renderer {
 		int[] mem = new int[width * height];
 		double yaw = camera.rotY;
 		double pitch = camera.rotX;
-		double[][] ref = new double[][] { { sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) }, { -sin(yaw), cos(yaw), 0 }, // equal to cos(yaw + PI/2), sin(yaw + PI/2), 0
+		double[][] ref = new double[][] { 
+				{ sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) }, 
+				{ -sin(yaw), cos(yaw), 0 }, // equal to cos(yaw + PI/2), sin(yaw + PI/2), 0
 				{ cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), 2 * sin(pitch) } // cross product of the two vectors above
 		};
 
 		// raycast for each pixel
 		for (int py = 0; py < height - pixelScale; py += pixelScale) {
 			for (int px = 0; px < width - pixelScale; px += pixelScale) {
-				// if (camera.rotX != PI/2) System.out.println("Raycasting "+px+","+py);
+				// if (camera.rotX != PI/2)
+				// System.out.println("Raycasting "+px+","+py);
 				if (pixelScale == 1)
 					mem[px + py * width] = raycastF(px, py, width, height, ref);
 				else {
@@ -240,7 +258,9 @@ public class Renderer {
 		double i1, i2, i3;
 
 		double[] ray = new double[] { cos(pitchr) * cos(yawr), cos(pitchr) * sin(yawr), -sin(pitchr) };
-		ray = new double[] { ray[0] * ref[0][0] + ray[1] * ref[1][0] + ray[2] * ref[2][0], ray[0] * ref[0][1] + ray[1] * ref[1][1] + ray[2] * ref[2][1], ray[0] * ref[0][2] + ray[1] * ref[1][2] + ray[2] * ref[2][2], };
+		ray = new double[] { ray[0] * ref[0][0] + ray[1] * ref[1][0] + ray[2] * ref[2][0], 
+				ray[0] * ref[0][1] + ray[1] * ref[1][1] + ray[2] * ref[2][1],
+				ray[0] * ref[0][2] + ray[1] * ref[1][2] + ray[2] * ref[2][2], };
 		double xs = ray[0];
 		double ys = ray[1];
 		double zs = ray[2];
@@ -282,9 +302,9 @@ public class Renderer {
 			}
 
 			// block processing
-			Block block = world.getBlock(x1, y1, z1);
-			if (block != null) {
-				Color c = block.getType().getColor();
+			byte block = world.getBlock(x1, y1, z1);
+			if (block != 0) {
+				Color c = world.getType(block).getColor();
 				c = CalculateColor(c, camera.x, x1, camera.y, y1, camera.z, z1);
 				return c.getRGB();
 			}
@@ -318,14 +338,15 @@ public class Renderer {
 
 	public MemoryImageSource renderG(int width, int height, int pixelScale, int castScale, boolean doShadows) {
 		if (mem.length != width * height) {
-			mem = new int[width * height]; // this is very marginally faster than recreating it every frame
+			mem = new int[width * height]; // this is very marginally faster
+											// than recreating it every frame
 		}
 		double yaw = camera.rotY;
 		double pitch = camera.rotX;
-		double[][] ref = new double[][] { { sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) },
+		double[][] ref = new double[][] { 
+				{ sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) }, 
 				{ -sin(yaw), cos(yaw), 0 }, // equal to cos(yaw + PI/2), sin(yaw + PI/2), 0
-				{ cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), 2 * sin(pitch) } // cross product of the two vectors
-																					// above
+				{ cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), 2 * sin(pitch) } // cross product of the two vectors above
 		};
 
 		// raycast for each pixel
@@ -333,8 +354,7 @@ public class Renderer {
 		for (int py = 0; py < height - pixelScale; py += pixelScale) {
 			for (int px = 0; px < width - pixelScale; px += pixelScale) {
 				if (pixelScale == 1) {
-					service.execute(new PixelWorker(mem, new int[] { px + py * width }, px, py, width, height, ref,
-							doShadows));
+					service.execute(new PixelWorker(mem, new int[] { px + py * width }, px, py, width, height, ref, doShadows));
 				} else {
 					int[] fbIndices = new int[pixelScale * pixelScale];
 					for (int pys = 0; pys < pixelScale; ++pys) {
@@ -448,8 +468,8 @@ public class Renderer {
 					tMaxZ += tDeltaZ;
 				}
 			}
-			Block block = world.getBlock(x, y, z);
-			if (block != null) {
+			byte block = world.getBlock(x, y, z);
+			if (block != 0) {
 				double t = 0;
 				switch (face) {
 				case 0:
@@ -462,8 +482,7 @@ public class Renderer {
 					t = tMaxZ - tDeltaZ - 0.01;
 					break;
 				}
-				return new RayCastCollision(block, face, t * dx / rayMagnitude + startX,
-						t * dy / rayMagnitude + startY, t * dz / rayMagnitude + startZ);
+				return new RayCastCollision(block, face, t * dx / rayMagnitude + startX, t * dy / rayMagnitude + startY, t * dz / rayMagnitude + startZ);
 			}
 		}
 
@@ -486,8 +505,7 @@ public class Renderer {
 		return new Color(red, green, blue);
 	}
 
-	private Color CalculateColor(Color c, double x1, double x2, double y1, double y2, double z1, double z2, int face,
-			double directionalDot) {
+	private Color CalculateColor(Color c, double x1, double x2, double y1, double y2, double z1, double z2, int face, double directionalDot) {
 		double ray[] = { x1 - x2, y1 - y2, z1 - z2 };
 		double distance = Math.sqrt(ray[0] * ray[0] + ray[1] * ray[1] + ray[2] * ray[2]);
 		ray[0] /= distance;
@@ -533,8 +551,7 @@ public class Renderer {
 		private double[][] ref;
 		private boolean doShadows;
 
-		public PixelWorker(int[] framebuffer, int[] fbIndices, int px, int py, int width, int height, double[][] ref,
-				boolean doShadows) {
+		public PixelWorker(int[] framebuffer, int[] fbIndices, int px, int py, int width, int height, double[][] ref, boolean doShadows) {
 			this.framebuffer = framebuffer;
 			this.fbIndices = fbIndices;
 			this.px = px;
@@ -551,17 +568,15 @@ public class Renderer {
 		public void run() {
 			RayCastCollision result = Renderer.this.raycastGScreenCoords(px, py, width, height, ref);
 			Color c;
-			double lightRayMagnitude = Math.sqrt(lightRay[0] * lightRay[0] + lightRay[1] * lightRay[1] + lightRay[2]
-					* lightRay[2]);
+			double lightRayMagnitude = Math.sqrt(lightRay[0] * lightRay[0] + lightRay[1] * lightRay[1] + lightRay[2] * lightRay[2]);
 			if (result != null) {
-				Block block = result.getCollisionBlock();
+				byte block = result.getCollisionBlock();
 				double x = result.getX();
 				double y = result.getY();
 				double z = result.getZ();
 				double lightDot = 0;
 				if (doShadows) {
-					RayCastCollision lightOcclusion = Renderer.this.raycastG(result.getX(), result.getY(),
-							result.getZ(), lightRay);
+					RayCastCollision lightOcclusion = Renderer.this.raycastG(result.getX(), result.getY(), result.getZ(), lightRay);
 					if (lightOcclusion == null) {
 						switch (result.getFace()) {
 						case 0:
@@ -576,8 +591,7 @@ public class Renderer {
 						}
 					}
 				}
-				c = Renderer.this.CalculateColor(block.getType().getColor(), camera.x, x, camera.y, y, camera.z, z,
-						result.getFace(), lightDot);
+				c = Renderer.this.CalculateColor(world.getType(block).getColor(), camera.x, x, camera.y, y, camera.z, z, result.getFace(), lightDot);
 			} else {
 				c = SkyboxColor;
 			}

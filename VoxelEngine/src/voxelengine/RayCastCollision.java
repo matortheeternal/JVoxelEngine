@@ -1,12 +1,12 @@
 package voxelengine;
 
 public class RayCastCollision {
-	private Block collisionBlock;
+	private byte collisionBlock;
 	private int face;
 
 	private double x, y, z;
-
-	public RayCastCollision(Block collisionBlock, int face, double x, double y, double z) {
+	
+	public RayCastCollision(byte collisionBlock, int face, double x, double y, double z) {
 		super();
 		this.collisionBlock = collisionBlock;
 		this.face = face;
@@ -15,11 +15,11 @@ public class RayCastCollision {
 		this.z = z;
 	}
 
-	public Block getCollisionBlock() {
+	public byte getCollisionBlock() {
 		return collisionBlock;
 	}
 
-	public void setCollisionBlock(Block collisionBlock) {
+	public void setCollisionBlock(byte collisionBlock) {
 		this.collisionBlock = collisionBlock;
 	}
 

@@ -37,6 +37,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	private long time = System.currentTimeMillis();
 	private long ttime = 4000;
 	private Thread rpThread;
+	private static final int bgcount = 32;
 	
 	public void start() {
 		if (rpThread == null) {
@@ -47,19 +48,27 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	
 	public void init() {
 		this.setSize(784, 562);
-		bg1 = getImage(getCodeBase(), "bg1.jpg");
-		bg2 = getImage(getCodeBase(), "bg2.jpg");
-		bg3 = getImage(getCodeBase(), "bg3.jpg");
-		bg4 = getImage(getCodeBase(), "bg4.jpg");
-		bg5 = getImage(getCodeBase(), "bg5.jpg");
-		bg6 = getImage(getCodeBase(), "bg6.jpg");
-		bg7 = getImage(getCodeBase(), "bg7.jpg");
-		bg8 = getImage(getCodeBase(), "bg8.jpg");
-		bg9 = getImage(getCodeBase(), "bg9.jpg");
-		bg10 = getImage(getCodeBase(), "bg10.jpg");
-		slideshow = new Image[]{bg1, bg2, bg3, bg4, bg5, bg6, bg7, bg8, bg9, bg10};
+		
+		// load slideshow
+		slideshow = new Image[bgcount];
+		for (int i = 0; i < bgcount; i++) {
+			slideshow[i] = getImage(getCodeBase(), Integer.toString(i+1)+".jpg");
+		}
+		// shuffle slideshow
+		for (int i = 0; i < 3 * bgcount; i++) {
+			int i1 = i % bgcount;
+			int i2 = (int) (Math.random() * bgcount);
+			Image s1 = slideshow[i1];
+			Image s2 = slideshow[i2];
+			slideshow[i1] = s2;
+			slideshow[i2] = s1;
+		}
+		
+		// start menu music
 		sound = getAudioClip(getCodeBase(), "menu.au");
 		sound.loop();
+		
+		// create menu
 		mainMenu();
 	}
 	
@@ -127,6 +136,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		choice.addItem("Mandelbox");
 		choice.addItem("Greek Cross");
 		choice.addItem("Octahedron");
+		choice.addItem("Load");
 		choice.setMaximumSize(new Dimension(140, 40));
 		choice.setForeground(Color.LIGHT_GRAY);
 		choice.setBackground(Color.BLACK);
@@ -225,6 +235,8 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	}
 	
 	public void mengerMenu() {
+		color.setEnabled(true);
+		colorL.setEnabled(true);
 		colorL.setText("Color: ");
 		color.removeAll();
 		color.addItem("red");
@@ -248,6 +260,8 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	}
 	
 	public void crossMenu() {
+		color.setEnabled(true);
+		colorL.setEnabled(true);
 		colorL.setText("Color: ");
 		color.removeAll();
 		color.addItem("red");
@@ -273,6 +287,8 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	}
 	
 	public void octahedronMenu() {
+		color.setEnabled(true);
+		colorL.setEnabled(true);
 		colorL.setText("Color: ");
 		color.removeAll();
 		color.addItem("red");
@@ -298,6 +314,8 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	}
 	
 	public void bulbMenu() {
+		color.setEnabled(true);
+		colorL.setEnabled(true);
 		colorL.setText("Palette: ");
 		color.removeAll();
 		color.addItem("test");
@@ -309,6 +327,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		powerL.setText("Power: ");
 		size.setText("81");
 		power.setEnabled(true);
+		power.setText("8");
 		zoom.setEnabled(false);
 		minIt.setEnabled(true);
 		maxIt.setEnabled(true);
@@ -317,6 +336,8 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	}
 	
 	public void boxMenu() {
+		color.setEnabled(true);
+		colorL.setEnabled(true);
 		colorL.setText("Palette: ");
 		color.removeAll();
 		color.addItem("test");
@@ -334,6 +355,17 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		maxIt.setEnabled(true);
 		cutoff.setEnabled(true);
 		cutoff.setText("5");
+	}
+	
+	public void loadMenu() {
+		color.setEnabled(true);
+		power.setEnabled(false);
+		color.removeAll();
+		color.addItem("test.wrl");
+		zoom.setEnabled(false);
+		minIt.setEnabled(false);
+		maxIt.setEnabled(false);
+		cutoff.setEnabled(false);
 	}
 	
 	public void settingsMenu() {
@@ -390,6 +422,8 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 				crossMenu();
 			} else if (sel.equals("Octahedron")) {
 				octahedronMenu();
+			} else if (sel.equals("Load")) {
+				loadMenu();
 			}
 		}
 	}
@@ -399,7 +433,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		while (rpThread != null) {
 			if (System.currentTimeMillis() - time >= ttime) {
 				time = System.currentTimeMillis();
-				ndx = (ndx + 1) % 9;
+				ndx = (ndx + 1) % bgcount;
 			}
 		    try {
 		    	Thread.sleep(500);

@@ -1,15 +1,21 @@
 package voxelengine;
 
 import java.awt.Color;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class World {
 	private int size;
 	private Chunk[][][] chunks;
 	private boolean[][][] isEmpty;
 	private BlockLibrary library = new BlockLibrary();
-	private ArrayList<Palette> palettes = new ArrayList<Palette>();
+	private ArrayList<BytePalette> palettes = new ArrayList<BytePalette>();
 	
 	// constructor
 	public World(int size) {
@@ -38,7 +44,7 @@ public class World {
 		else
 			return null;
 	}
-	public Block getBlock(int x, int y, int z) {
+	public byte getBlock(int x, int y, int z) {
 		int xChunk = x/16;
 		int yChunk = y/16;
 		int zChunk = z/16;
@@ -46,23 +52,22 @@ public class World {
 		if (chunk != null)
 			return chunk.getBlock(x % 16, y % 16, z % 16);
 		else
-			return null;
+			return 0;
 	}
-	public Block getBlock(double x, double y, double z) {
+	public byte getBlock(double x, double y, double z) {
 		int xi = (int) x;
 		int yi = (int) y;
 		int zi = (int) z;
 		return getBlock(xi, yi, zi);
 	}
-	public void setBlock(String id, int x, int y, int z) {
+	public void setBlock(byte id, int x, int y, int z) {
 		int xChunk = x/16;
 		int yChunk = y/16;
 		int zChunk = z/16;
 		Chunk chunk = getChunk(xChunk, yChunk, zChunk);
-		BlockType type = getType(id);
-		chunk.setBlock(type, x % 16, y % 16, z % 16);
+		chunk.setBlock(id, x % 16, y % 16, z % 16);
 	}
-	public void setBlock(String id, double x, double y, double z) {
+	public void setBlock(byte id, double x, double y, double z) {
 		int xi = (int) x;
 		int yi = (int) y;
 		int zi = (int) z;
@@ -88,12 +93,12 @@ public class World {
 	public void addType(BlockType type) {
 		library.addType(type);
 	}
-	public BlockType getType(String id) {
+	public BlockType getType(byte id) {
 		return library.getType(id);
 	}
 	
 	// world generation methods
-	public void generateMengerSponge(String id, int d0, int xOffset, int yOffset, int zOffset) {
+	public void generateMengerSponge(byte id, int d0, int xOffset, int yOffset, int zOffset) {
 		// place block and return if dimension = 1
 		if (d0 == 1) {
 			setBlock(id, xOffset, yOffset, zOffset);
@@ -122,7 +127,7 @@ public class World {
 		}
 	}
 	
-	public void generateBox(String id, int d0, int xOffset, int yOffset, int zOffset) {
+	public void generateBox(byte id, int d0, int xOffset, int yOffset, int zOffset) {
 		for (int x = 0; x < d0; x++) {
 			for (int y = 0; y < d0; y++) {
 				setBlock(id, x + xOffset, y + yOffset, zOffset);
@@ -143,37 +148,9 @@ public class World {
 		}
 	}
 	
-	public void generateBensWorld() {
-		for (int i = 0; i < 100; ++i) {
-			Random r = new Random(i);
-			for (int j = 0; j < 100; ++j) {
-				setBlock("blue", i, j, 0);
-				if ((i + j) % 2 == 0)
-					setBlock("red", i, 0, j);
-				else
-					setBlock("black", i, 0, j);
-				setBlock("orange", 0, i, j);
-				setBlock("cyan", i, j, 50);
-				setBlock("yellow", i, 99, j);
-				setBlock("pink", 99, i, j);
-
-				if (i % 4 == 0) {
-					int rand = r.nextInt(100);
-					if (rand < 10)
-						setBlock("green", i, 70, j);
-					else if (rand < 50)
-						setBlock("gray", i, 70, j);
-					else
-						setBlock("darkGray", i, 70, j);
-				} else if (i % 2 == 0)
-					setBlock("black", i, 70, j);
-			}
-		}
-	}
-	
 	// generate mandelbulb
 	public void generateMandelbulb(String name, int d, double power, double cutoff, int xOffset, int yOffset, int zOffset, int itMin, int itMax) {
-	    Palette palette = getPalette(name);
+	    BytePalette palette = getPalette(name);
 	    //palette.printContents();
 	    for (int x = 0; x < d; x++) {
 	        double xc = tf(x, d);
@@ -194,7 +171,7 @@ public class World {
 	                
 	                // place block if cutoff reached in itMin -> itMax range
 	                if ((iterations >= itMin) && (iterations < itMax)) {
-                        String id = palette.get(iterations - itMin);
+                        byte id = palette.get(iterations - itMin);
                         //System.out.println("Placing block "+id+" at ("+(xOffset + x)+","+(yOffset + y)+","+(zOffset + z)+")");
 	                    setBlock(id, xOffset + x, yOffset + y, zOffset + z);
 	                }
@@ -242,7 +219,7 @@ public class World {
 	// generate mandelbox
 	public void generateMandelbox(String name, int d, double scale, double cutoff, int itMin, int itMax, double tfmult, int xOffset, int yOffset, int zOffset) {
 	    double tfsub = tfmult/2;
-	    Palette palette = getPalette(name);
+	    BytePalette palette = getPalette(name);
 		for (int x = 0; x < d; x++) {
 	        double xc = (tfmult * x)/(d - 1) - tfsub;
 	        for (int y = 0; y < d; y++) {
@@ -262,7 +239,7 @@ public class World {
 	                if ((iterations >= itMin) && (iterations < itMax)) {
 		                // place block if cutoff reached in itMin -> itMax range
 		                if ((iterations >= itMin) && (iterations < itMax)) {
-	                        String id = palette.get(iterations - itMin);
+	                        byte id = palette.get(iterations - itMin);
 	                        //System.out.println("Placing block "+id+" at ("+(xOffset + x)+","+(yOffset + y)+","+(zOffset + z)+")");
 		                    setBlock(id, xOffset + x, yOffset + y, zOffset + z);
 		                }
@@ -315,7 +292,7 @@ public class World {
 	}
     
     // greek cross fractal
-    public void generateCross(String id, int d0, int xOffset, int yOffset, int zOffset, int scale, int mode) {
+    public void generateCross(byte id, int d0, int xOffset, int yOffset, int zOffset, int scale, int mode) {
     	int d1 = (d0 - 1)/2;
         if ((Math.floor(d1) - d1 != 0) || (d1 < scale))
             return;
@@ -353,7 +330,7 @@ public class World {
     }
 
     // octahedron fractal
-    public void generateOctahedron(String id, int d0, int xOffset, int yOffset, int zOffset, int oscale) {
+    public void generateOctahedron(byte id, int d0, int xOffset, int yOffset, int zOffset, int oscale) {
         int d1 = (d0 - 1)/2;
         int d2 = (d1 - 1)/2;
         // create octahedron when minimum scale reached
@@ -385,62 +362,86 @@ public class World {
 	
 	// palettes and block types
 	public void addColorBlockTypes() {
-		library.addType(new BlockType(null, "red", "1", Color.RED));
-		library.addType(new BlockType(null, "green", "2", Color.GREEN));
-		library.addType(new BlockType(null, "blue", "3", Color.BLUE));
-		library.addType(new BlockType(null, "yellow", "4", Color.YELLOW));
-		library.addType(new BlockType(null, "orange", "5", Color.ORANGE));
-		library.addType(new BlockType(null, "magenta", "6", Color.MAGENTA));
-		library.addType(new BlockType(null, "pink", "7", Color.PINK));
-		library.addType(new BlockType(null, "cyan", "8", Color.CYAN));
-		library.addType(new BlockType(null, "black", "9", Color.BLACK));
-		library.addType(new BlockType(null, "white", "A", Color.WHITE));
-		library.addType(new BlockType(null, "gray", "B", Color.GRAY));
-		library.addType(new BlockType(null, "darkGray", "C", Color.DARK_GRAY));
-		library.addType(new BlockType(null, "gloriousBlue", "D", new Color(7,8,114)));
-		library.addType(new BlockType(null, "watermelon", "E", new Color(247,70,122)));
-		library.addType(new BlockType(null, "gloriousViolet", "F", new Color(73,8,162)));
-		library.addType(new BlockType(null, "darkBlue", "G", new Color(14,0,42)));
-		library.addType(new BlockType(null, "brownPurple", "H", new Color(40,0,22)));
-		library.addType(new BlockType(null, "turquoise", "I", new Color(85,135,136)));
-		library.addType(new BlockType(null, "lightTurquoise", "J", new Color(136,181,178)));
-		library.addType(new BlockType(null, "klineWhite", "K", new Color(224,225,219)));
-		library.addType(new BlockType(null, "salmon", "L", new Color(255,179,158)));
-		library.addType(new BlockType(null, "rust", "M", new Color(183,63,38)));
-		library.addType(new BlockType(null, "strongCyan", "N", new Color(105,210,231)));
-		library.addType(new BlockType(null, "muddledCyan", "O", new Color(167,219,216)));
-		library.addType(new BlockType(null, "stormyWhite", "P", new Color(224,228,204)));
-		library.addType(new BlockType(null, "goldfish", "Q", new Color(243,134,48)));
-		library.addType(new BlockType(null, "strongOrange", "R", new Color(250,105,0)));
-		library.addType(new BlockType(null, "lime", "S", new Color(207,240,158)));
-		library.addType(new BlockType(null, "greenFoam", "T", new Color(168,219,168)));
-		library.addType(new BlockType(null, "seaGreen", "U", new Color(121,189,154)));
-		library.addType(new BlockType(null, "darkTurquoise", "V", new Color(59,134,134)));
-		library.addType(new BlockType(null, "royalBlue", "W", new Color(11,72,107)));
+		library.addType(new BlockType(null, "red", 1, Color.RED));
+		library.addType(new BlockType(null, "green", 2, Color.GREEN));
+		library.addType(new BlockType(null, "blue", 3, Color.BLUE));
+		library.addType(new BlockType(null, "yellow", 4, Color.YELLOW));
+		library.addType(new BlockType(null, "orange", 5, Color.ORANGE));
+		library.addType(new BlockType(null, "magenta", 6, Color.MAGENTA));
+		library.addType(new BlockType(null, "pink", 7, Color.PINK));
+		library.addType(new BlockType(null, "cyan", 8, Color.CYAN));
+		library.addType(new BlockType(null, "black", 9, Color.BLACK));
+		library.addType(new BlockType(null, "white", 10, Color.WHITE));
+		library.addType(new BlockType(null, "gray", 11, Color.GRAY));
+		library.addType(new BlockType(null, "darkGray", 12, Color.DARK_GRAY));
+		library.addType(new BlockType(null, "gloriousBlue", 13, new Color(7, 8, 114)));
+		library.addType(new BlockType(null, "watermelon", 14, new Color(247, 70, 122)));
+		library.addType(new BlockType(null, "gloriousViolet", 15, new Color(73, 8, 162)));
+		library.addType(new BlockType(null, "darkBlue", 16, new Color(14, 0, 42)));
+		library.addType(new BlockType(null, "brownPurple", 17, new Color(40, 0, 22)));
+		library.addType(new BlockType(null, "turquoise", 18, new Color(85, 135, 136)));
+		library.addType(new BlockType(null, "lightTurquoise", 19, new Color(136, 181, 178)));
+		library.addType(new BlockType(null, "klineWhite", 20, new Color(224, 225, 219)));
+		library.addType(new BlockType(null, "salmon", 21, new Color(255, 179, 158)));
+		library.addType(new BlockType(null, "rust", 22, new Color(183, 63, 38)));
+		library.addType(new BlockType(null, "strongCyan", 23, new Color(105, 210, 231)));
+		library.addType(new BlockType(null, "muddledCyan", 24, new Color(167, 219, 216)));
+		library.addType(new BlockType(null, "stormyWhite", 25, new Color(224, 228, 204)));
+		library.addType(new BlockType(null, "goldfish", 26, new Color(243, 134, 48)));
+		library.addType(new BlockType(null, "strongOrange", 27, new Color(250, 105, 0)));
+		library.addType(new BlockType(null, "lime", 28, new Color(207, 240, 158)));
+		library.addType(new BlockType(null, "greenFoam", 29, new Color(168, 219, 168)));
+		library.addType(new BlockType(null, "seaGreen", 30, new Color(121, 189, 154)));
+		library.addType(new BlockType(null, "darkTurquoise", 31, new Color(59, 134, 134)));
+		library.addType(new BlockType(null, "royalBlue", 32, new Color(11, 72, 107)));
 	}
 	
 	public void addPalettes() {
-		palettes.add(new Palette("test", new String[]{"white", "gray", "darkGray", "black", "red", "orange", "yellow", "green", "cyan", "blue", "magenta", "pink"}));
-		palettes.add(new Palette("blackNblue", new String[]{"white", "gray", "darkGray", "black", "blue", "cyan", "white", "gray", "darkGray", "blue", "cyan", "white"}));
-		palettes.add(new Palette("glory", new String[]{"gloriousBlue", "watermelon", "gloriousViolet", "darkBlue", "brownPurple", "gloriousBlue", "watermelon", "gloriousViolet", "darkBlue", "brownPurple"}));
-		palettes.add(new Palette("boutique", new String[]{"turquoise", "lightTurquoise", "klineWhite", "salmon", "rust", "turquoise", "lightTurquoise", "klineWhite", "salmon", "rust"}));
-		palettes.add(new Palette("goldfish", new String[]{"strongCyan", "muddledCyan", "stormyWhite", "goldfish", "strongOrange", "strongCyan", "muddledCyan", "stormyWhite", "goldfish", "strongOrange"}));
-		palettes.add(new Palette("dreamy", new String[]{"lime", "greenFoam", "seaGreen", "darkTurquoise", "royalBlue", "lime", "greenFoam", "seaGreen", "darkTurquoise", "royalBlue"}));
+		palettes.add(new BytePalette("test", new byte[] { 10, 11, 12, 9, 1, 5, 4, 2, 8, 3, 6, 7 }));
+		palettes.add(new BytePalette("blackNblue", new byte[] { 10, 11, 12, 9, 3, 8, 10, 11, 12, 3, 8, 10 }));
+		palettes.add(new BytePalette("glory", new byte[] { 13, 14, 15, 16, 17, 13, 14, 15, 16, 17 }));
+		palettes.add(new BytePalette("boutique", new byte[] { 18, 19, 20, 21, 22, 18, 19, 20, 21, 22 }));
+		palettes.add(new BytePalette("goldfish", new byte[] { 23, 24, 25, 26, 27, 23, 24, 25, 26, 27 }));
+		palettes.add(new BytePalette("dreamy", new byte[] { 28, 29, 30, 31, 32, 28, 29, 30, 31, 32 }));
 	}
 	
-	public Palette getPalette(String name) {
+	public BytePalette getPalette(String name) {
 		for (int i = 0; i < palettes.size(); i++) {
 			if (palettes.get(i).getName().equals(name))
 				return palettes.get(i);
 		}
 		return null;
 	}
-	
+
 	// load/save world
 	public void load(String filename) {
-		
+		try {
+			FileInputStream fis = new FileInputStream(filename);
+			GZIPInputStream gs = new GZIPInputStream(fis);
+			ObjectInputStream in = new ObjectInputStream(gs);
+			chunks = (Chunk[][][]) in.readObject();
+			in.close();
+			fis.close();
+		} catch (Exception e) {
+			System.out.println(e);
+		}
 	}
+
 	public void save(String filename) {
-		
+		try {
+			FileOutputStream fos = new FileOutputStream(filename);
+			GZIPOutputStream gz = new GZIPOutputStream(fos);
+			ObjectOutputStream out = new ObjectOutputStream(gz);
+			out.writeObject(chunks);
+			out.flush();
+			out.close();
+			fos.close();
+		} catch (IOException e) {
+			System.out.println(e);
+		}
+	}
+
+	public byte getByteFromName(String string) {
+		return library.getType(string).getId();
 	}
 }

@@ -6,15 +6,15 @@ import java.awt.Image;
 public class BlockType {
 	private Image texture;
 	private String name;
-	private String id;
+	private byte id;
 	private Color color;
 	
 	// constructor
-	public BlockType(Image texture, String name, String id, Color color) {
+	public BlockType(Image texture, String name, int id, Color color) {
 		super();
 		this.texture = texture;
 		this.name = name;
-		this.id = id;
+		this.id = (byte) id;
 		this.color = color;
 	}
 	
@@ -25,7 +25,7 @@ public class BlockType {
 	public String getName() {
 		return name;
 	}
-	public String getId() {
+	public byte getId() {
 		return id;
 	}
 	public Color getColor() {
