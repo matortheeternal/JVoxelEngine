@@ -20,6 +20,19 @@ public class BytePalette {
 	}
 	public void printContents() {
 		for (int i = 0; i < palette.length; i++)
-			System.out.println(get(i));
+			System.out.print(get(i)+",");
+		System.out.println();
+	}
+	public BytePalette remap(int size) {
+		byte[] a = new byte[size];
+		for (int i = 0; i < size; i++) {
+			int n = (getSize() - 1) * (i+1)/size;
+			a[i] = palette[n];
+		}
+		BytePalette p = new BytePalette(name+"-remapped", a);
+		return p;
+	}
+	public int getSize() {
+		return palette.length;
 	}
 }

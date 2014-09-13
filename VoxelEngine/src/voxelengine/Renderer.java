@@ -10,10 +10,11 @@ public class Renderer {
 	private World world;
 	private Color SkyboxColor = Color.BLACK;
 	private double falloff = 4.0;
-	private double rate = 0.6;
+	private double rate = 2;
 	private double ambientIntensity = 0.2;
 	private double directionalIntensity = 0.3;
 	private int renderDistance = 8;
+	private int csz = 64;
 	public Camera camera;
 
 	// constructor
@@ -56,7 +57,7 @@ public class Renderer {
 		double y1 = camera.y;
 		double z1 = camera.z;
 		int x2, y2, z2;
-		int cx1, cy1, cz1, cx2, cy2, cz2;
+//		int cx1, cy1, cz1, cx2, cy2, cz2;
 
 		double xs = Math.sin(pitch) * Math.cos(yaw) / castScale;
 		double ys = Math.sin(pitch) * Math.sin(yaw) / castScale;
@@ -64,20 +65,20 @@ public class Renderer {
 
 		while (inBoundsC(x1, y1, z1)) {
 			// chunk processing
-			cx1 = (int) (x1 / 16.0);
-			cy1 = (int) (y1 / 16.0);
-			cz1 = (int) (z1 / 16.0);
-			if (world.getIsEmpty(cx1, cy1, cz1)) {
-				do {
-					x1 += xs;
-					y1 += ys;
-					z1 += zs;
-					cx2 = (int) (x1 / 16.0);
-					cy2 = (int) (y1 / 16.0);
-					cz2 = (int) (z1 / 16.0);
-				} while (cx1 == cx2 && cy1 == cy2 && cz1 == cz2);
-				continue;
-			}
+//			cx1 = (int) (x1 / 16.0);
+//			cy1 = (int) (y1 / 16.0);
+//			cz1 = (int) (z1 / 16.0);
+//			if (world.getIsEmpty(cx1, cy1, cz1)) {
+//				do {
+//					x1 += xs;
+//					y1 += ys;
+//					z1 += zs;
+//					cx2 = (int) (x1 / 16.0);
+//					cy2 = (int) (y1 / 16.0);
+//					cz2 = (int) (z1 / 16.0);
+//				} while (cx1 == cx2 && cy1 == cy2 && cz1 == cz2);
+//				continue;
+//			}
 
 			// block processing
 			byte block = world.getBlock(x1, y1, z1);
@@ -101,10 +102,10 @@ public class Renderer {
 	}
 
 	private boolean inBoundsC(double x, double y, double z) {
-		int b = world.getSize() * 16;
-		int dx = ((int) Math.abs(camera.x - x)) / 16;
-		int dy = ((int) Math.abs(camera.y - y)) / 16;
-		int dz = ((int) Math.abs(camera.z - z)) / 16;
+		int b = world.getSize() * csz;
+		int dx = ((int) Math.abs(camera.x - x)) / csz;
+		int dy = ((int) Math.abs(camera.y - y)) / csz;
+		int dz = ((int) Math.abs(camera.z - z)) / csz;
 		return x >= 0 && x < b && y >= 0 && y < b && z >= 0 && z < b && dx < renderDistance && dy < renderDistance && dz < renderDistance;
 	}
 
@@ -112,22 +113,10 @@ public class Renderer {
 		int[] mem = new int[width * height];
 		double yaw = camera.rotY;
 		double pitch = camera.rotX;
-		double[][] ref = new double[][] { { sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) }, { -sin(yaw), cos(yaw), 0 }, // equal
-																																		// to
-																																		// cos(yaw
-																																		// +
-																																		// PI/2),
-																																		// sin(yaw
-																																		// +
-																																		// PI/2),
-																																		// 0
-				{ cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), 2 * sin(pitch) } // cross
-																					// product
-																					// of
-																					// the
-																					// two
-																					// vectors
-																					// above
+		double[][] ref = new double[][] { 
+				{ sin(pitch) * cos(yaw), sin(pitch) * sin(yaw), -cos(pitch) }, 
+				{ -sin(yaw), cos(yaw), 0 }, // equal to cos(yaw + PI/2), sin(yaw + PI/2), 0
+				{ cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), 2 * sin(pitch) } // cross product of the two vectors above
 		};
 
 		// raycast for each pixel
@@ -156,14 +145,13 @@ public class Renderer {
 		double fovH = camera.fovH / 2;
 		double fovV = camera.fovV / 2;
 		double yawr = ((px - w2) / w2) * fovH;
-		double pitchr = ((py - h2) / h2) * fovV; // correction because view
-													// window isn't 1:1
+		double pitchr = ((py - h2) / h2) * fovV; // correction because view window isn't 1:1
 
 		double x1 = camera.x;
 		double y1 = camera.y;
 		double z1 = camera.z;
 		int x2, y2, z2;
-		int cx1, cy1, cz1, cx2, cy2, cz2;
+//		int cx1, cy1, cz1, cx2, cy2, cz2;
 
 		double[] ray = new double[] { cos(pitchr) * cos(yawr), cos(pitchr) * sin(yawr), -sin(pitchr) };
 		ray = new double[] { ray[0] * ref[0][0] + ray[1] * ref[1][0] + ray[2] * ref[2][0], ray[0] * ref[0][1] + ray[1] * ref[1][1] + ray[2] * ref[2][1], ray[0] * ref[0][2] + ray[1] * ref[1][2] + ray[2] * ref[2][2], };
@@ -173,20 +161,20 @@ public class Renderer {
 
 		while (inBoundsC(x1, y1, z1)) {
 			// chunk processing
-			cx1 = (int) (x1 / 16.0);
-			cy1 = (int) (y1 / 16.0);
-			cz1 = (int) (z1 / 16.0);
-			if (world.getIsEmpty(cx1, cy1, cz1)) {
-				do {
-					x1 += xs;
-					y1 += ys;
-					z1 += zs;
-					cx2 = (int) (x1 / 16.0);
-					cy2 = (int) (y1 / 16.0);
-					cz2 = (int) (z1 / 16.0);
-				} while (cx1 == cx2 && cy1 == cy2 && cz1 == cz2);
-				continue;
-			}
+//			cx1 = (int) (x1 / 16.0);
+//			cy1 = (int) (y1 / 16.0);
+//			cz1 = (int) (z1 / 16.0);
+//			if (world.getIsEmpty(cx1, cy1, cz1)) {
+//				do {
+//					x1 += xs;
+//					y1 += ys;
+//					z1 += zs;
+//					cx2 = (int) (x1 / 16.0);
+//					cy2 = (int) (y1 / 16.0);
+//					cz2 = (int) (z1 / 16.0);
+//				} while (cx1 == cx2 && cy1 == cy2 && cz1 == cz2);
+//				continue;
+//			}
 
 			// block processing
 			byte block = world.getBlock(x1, y1, z1);
@@ -253,8 +241,7 @@ public class Renderer {
 		double x1 = camera.x;
 		double y1 = camera.y;
 		double z1 = camera.z;
-		int x2, y2, z2;
-		int cx1, cy1, cz1, cx2, cy2, cz2;
+//		int cx1, cy1, cz1;
 		double i1, i2, i3;
 
 		double[] ray = new double[] { cos(pitchr) * cos(yawr), cos(pitchr) * sin(yawr), -sin(pitchr) };
@@ -275,31 +262,31 @@ public class Renderer {
 				z1 += (zs > 0) ? sv : -sv;
 
 			// chunk processing
-			cx1 = (int) (x1 / 16.0);
-			cy1 = (int) (y1 / 16.0);
-			cz1 = (int) (z1 / 16.0);
-			if (world.getIsEmpty(cx1, cy1, cz1)) {
-				i1 = (xs == 0) ? 999999999 : (xs > 0) ? abs((16.0 - x1 % 16.0) / xs) : abs((x1 % 16.0) / xs);
-				i2 = (ys == 0) ? 999999999 : (ys > 0) ? abs((16.0 - y1 % 16.0) / ys) : abs((y1 % 16.0) / ys);
-				i3 = (zs == 0) ? 999999999 : (zs > 0) ? abs((16.0 - z1 % 16.0) / zs) : abs((z1 % 16.0) / zs);
-				if ((i1 <= i2) && (i1 <= i3)) {
-					// step by i1
-					x1 += xs * (i1 + sv);
-					y1 += ys * (i1 + sv);
-					z1 += zs * (i1 + sv);
-				} else if ((i2 <= i1) && (i2 <= i3)) {
-					// step by i2
-					x1 += xs * (i2 + sv);
-					y1 += ys * (i2 + sv);
-					z1 += zs * (i2 + sv);
-				} else {
-					// step by i3
-					x1 += xs * (i3 + sv);
-					y1 += ys * (i3 + sv);
-					z1 += zs * (i3 + sv);
-				}
-				continue;
-			}
+//			cx1 = (int) (x1 / 16.0);
+//			cy1 = (int) (y1 / 16.0);
+//			cz1 = (int) (z1 / 16.0);
+//			if (world.getIsEmpty(cx1, cy1, cz1)) {
+//				i1 = (xs == 0) ? 999999999 : (xs > 0) ? abs((16.0 - x1 % 16.0) / xs) : abs((x1 % 16.0) / xs);
+//				i2 = (ys == 0) ? 999999999 : (ys > 0) ? abs((16.0 - y1 % 16.0) / ys) : abs((y1 % 16.0) / ys);
+//				i3 = (zs == 0) ? 999999999 : (zs > 0) ? abs((16.0 - z1 % 16.0) / zs) : abs((z1 % 16.0) / zs);
+//				if ((i1 <= i2) && (i1 <= i3)) {
+//					// step by i1
+//					x1 += xs * (i1 + sv);
+//					y1 += ys * (i1 + sv);
+//					z1 += zs * (i1 + sv);
+//				} else if ((i2 <= i1) && (i2 <= i3)) {
+//					// step by i2
+//					x1 += xs * (i2 + sv);
+//					y1 += ys * (i2 + sv);
+//					z1 += zs * (i2 + sv);
+//				} else {
+//					// step by i3
+//					x1 += xs * (i3 + sv);
+//					y1 += ys * (i3 + sv);
+//					z1 += zs * (i3 + sv);
+//				}
+//				continue;
+//			}
 
 			// block processing
 			byte block = world.getBlock(x1, y1, z1);
@@ -368,9 +355,8 @@ public class Renderer {
 		}
 		try {
 			service.shutdown();
-			service.awaitTermination(10, TimeUnit.SECONDS);
+			service.awaitTermination(180, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if (fb == null) {
@@ -410,9 +396,9 @@ public class Renderer {
 		double startY = y;
 		double startZ = z;
 
-		double dx = ray[0] * renderDistance * 16;
-		double dy = ray[1] * renderDistance * 16;
-		double dz = ray[2] * renderDistance * 16;
+		double dx = ray[0] * renderDistance * csz;
+		double dy = ray[1] * renderDistance * csz;
+		double dz = ray[2] * renderDistance * csz;
 
 		double rayMagnitude = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
@@ -591,7 +577,10 @@ public class Renderer {
 						}
 					}
 				}
-				c = Renderer.this.CalculateColor(world.getType(block).getColor(), camera.x, x, camera.y, y, camera.z, z, result.getFace(), lightDot);
+				if (block != 0)
+					c = Renderer.this.CalculateColor(world.getType(block).getColor(), camera.x, x, camera.y, y, camera.z, z, result.getFace(), lightDot);
+				else
+					c = SkyboxColor;
 			} else {
 				c = SkyboxColor;
 			}

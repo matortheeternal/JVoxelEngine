@@ -17,6 +17,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.File;
+import java.nio.file.Files;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -30,7 +32,6 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	private Label sizeL, colorL, worldSizeL, minItL, maxItL, powerL, zoomL, resL, pixL, castL, cutoffL;
 	private Choice choice, color;
 	private AudioClip sound;
-	private Image bg1, bg2, bg3, bg4, bg5, bg6, bg7, bg8, bg9, bg10;
 	private Image[] slideshow;
 	private Panel pnl;
 	private int ndx = 0;
@@ -128,7 +129,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		worldSizeL.setForeground(Color.LIGHT_GRAY);
 		worldSizeL.setBackground(Color.BLACK);
 		worldSizeL.setMaximumSize(new Dimension(70, 20));
-		worldSize = new TextField("20");
+		worldSize = new TextField("6");
 		worldSize.setMaximumSize(new Dimension(50, 20));
 		choice = new Choice();
 		choice.addItem("Menger Sponge");
@@ -171,7 +172,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		colorL.setBackground(Color.BLACK);
 		colorL.setPreferredSize(new Dimension(50, 20));
 		color = new Choice();
-		color.setPreferredSize(new Dimension(80, 20));
+		color.setPreferredSize(new Dimension(120, 20));
 		sizeL = new Label("Size: ");
 		sizeL.setForeground(Color.LIGHT_GRAY);
 		sizeL.setBackground(Color.BLACK);
@@ -195,7 +196,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		powerL.setBackground(Color.BLACK);
 		powerL.setPreferredSize(new Dimension(50, 20));
 		power = new TextField("8");
-		power.setPreferredSize(new Dimension(50, 20));
+		power.setPreferredSize(new Dimension(100, 20));
 		zoomL = new Label("Zoom: ");
 		zoomL.setForeground(Color.LIGHT_GRAY);
 		zoomL.setBackground(Color.BLACK);
@@ -216,10 +217,9 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		pnl.add(Box.createRigidArea(new Dimension(10,0)));
 		pnl.add(sizeL, BorderLayout.CENTER);
 		pnl.add(size, BorderLayout.CENTER);
-		pnl.add(Box.createRigidArea(new Dimension(50,0)));
 		pnl.add(powerL, BorderLayout.CENTER);
 		pnl.add(power, BorderLayout.CENTER);
-		pnl.add(Box.createRigidArea(new Dimension(50,0)));
+		pnl.add(Box.createRigidArea(new Dimension(40,0)));
 		pnl.add(zoomL, BorderLayout.CENTER);
 		pnl.add(zoom, BorderLayout.CENTER);
 		pnl.add(minItL, BorderLayout.CENTER);
@@ -235,22 +235,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	}
 	
 	public void mengerMenu() {
-		color.setEnabled(true);
-		colorL.setEnabled(true);
-		colorL.setText("Color: ");
-		color.removeAll();
-		color.addItem("red");
-		color.addItem("green");
-		color.addItem("blue");
-		color.addItem("yellow");
-		color.addItem("orange");
-		color.addItem("magenta");
-		color.addItem("pink");
-		color.addItem("cyan");
-		color.addItem("black");
-		color.addItem("white");
-		color.addItem("gray");
-		color.addItem("darkGray");
+		addColors();
 		size.setText("81");
 		power.setEnabled(false);
 		zoom.setEnabled(false);
@@ -258,24 +243,9 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		maxIt.setEnabled(false);
 		cutoff.setEnabled(false);
 	}
-	
+
 	public void crossMenu() {
-		color.setEnabled(true);
-		colorL.setEnabled(true);
-		colorL.setText("Color: ");
-		color.removeAll();
-		color.addItem("red");
-		color.addItem("green");
-		color.addItem("blue");
-		color.addItem("yellow");
-		color.addItem("orange");
-		color.addItem("magenta");
-		color.addItem("pink");
-		color.addItem("cyan");
-		color.addItem("black");
-		color.addItem("white");
-		color.addItem("gray");
-		color.addItem("darkGray");
+		addColors();
 		powerL.setText("Scale: ");
 		power.setText("3");
 		size.setText("63");
@@ -287,22 +257,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	}
 	
 	public void octahedronMenu() {
-		color.setEnabled(true);
-		colorL.setEnabled(true);
-		colorL.setText("Color: ");
-		color.removeAll();
-		color.addItem("red");
-		color.addItem("green");
-		color.addItem("blue");
-		color.addItem("yellow");
-		color.addItem("orange");
-		color.addItem("magenta");
-		color.addItem("pink");
-		color.addItem("cyan");
-		color.addItem("black");
-		color.addItem("white");
-		color.addItem("gray");
-		color.addItem("darkGray");
+		addColors();
 		powerL.setText("Scale: ");
 		power.setText("7");
 		size.setText("63");
@@ -314,16 +269,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	}
 	
 	public void bulbMenu() {
-		color.setEnabled(true);
-		colorL.setEnabled(true);
-		colorL.setText("Palette: ");
-		color.removeAll();
-		color.addItem("test");
-		color.addItem("blackNblue");
-		color.addItem("glory");
-		color.addItem("boutique");
-		color.addItem("goldfish");
-		color.addItem("dreamy");
+		addPalettes();
 		powerL.setText("Power: ");
 		size.setText("81");
 		power.setEnabled(true);
@@ -336,16 +282,7 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 	}
 	
 	public void boxMenu() {
-		color.setEnabled(true);
-		colorL.setEnabled(true);
-		colorL.setText("Palette: ");
-		color.removeAll();
-		color.addItem("test");
-		color.addItem("blackNblue");
-		color.addItem("glory");
-		color.addItem("boutique");
-		color.addItem("goldfish");
-		color.addItem("dreamy");
+		addPalettes();
 		powerL.setText("Scale: ");
 		size.setText("81");
 		power.setText("1.5");
@@ -357,11 +294,57 @@ public class Menu extends Applet implements ActionListener, ItemListener, Runnab
 		cutoff.setText("5");
 	}
 	
+	private void addPalettes() {
+		color.setEnabled(true);
+		colorL.setText("Palette: ");
+		color.removeAll();
+		color.addItem("test");
+		color.addItem("Glory");
+		color.addItem("Boutique");
+		color.addItem("Goldfish");
+		color.addItem("Dreamy");
+		color.addItem("Technological");
+		color.addItem("Murderous");
+		color.addItem("Golddigger");
+		color.addItem("Undergrowth");
+		color.addItem("Feeling Blue");
+		color.addItem("Oranje");
+		color.addItem("Tropical Sea");
+		color.addItem("Motherboard");
+		color.addItem("Fire in the Night");
+		color.addItem("Sulfur");
+		color.addItem("Alien");
+		color.addItem("Fruit Shake");
+		color.addItem("Frosted Cactus");
+		color.addItem("Borg");
+	}
+
+	private void addColors() {
+		color.setEnabled(true);
+		colorL.setText("Color: ");
+		color.removeAll();
+		color.addItem("red");
+		color.addItem("green");
+		color.addItem("blue");
+		color.addItem("yellow");
+		color.addItem("orange");
+		color.addItem("magenta");
+		color.addItem("pink");
+		color.addItem("cyan");
+		color.addItem("black");
+		color.addItem("white");
+		color.addItem("gray");
+		color.addItem("darkGray");
+	}
+	
 	public void loadMenu() {
 		color.setEnabled(true);
 		power.setEnabled(false);
 		color.removeAll();
 		color.addItem("test.wrl");
+		color.addItem("10-Mandelbulb-Fire in the Night-256.wrl");
+		color.addItem("37-Menger Sponge-red-2187.wrl");
+		color.addItem("35-Mandelbox-Borg-2000.wrl");
 		zoom.setEnabled(false);
 		minIt.setEnabled(false);
 		maxIt.setEnabled(false);
