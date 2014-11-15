@@ -1,20 +1,16 @@
 // $Id$
 /*
-* Mandel.js v1.0
+* Mandel.js v1.1
 * created by matortheeternal
 * 04/16/2014
-* 
+*
 * Usage:
 * /cs mandel <blocktype> <mandeltype> <size>
 *
-* Palettes:
-* For mandelboxes and mandelbulbs you can use a palette instead of a single
-* block type.  See the main palettes section around line 82 for more information
-* and a listing of the valid palettes.  You use the name before "BlockList" to
-* specify the palette you want to use.  E.g. 
-*   /cs mandel grayscale box 100 -1.75 3.8 4 5 4
+* For help type:
+* /cs mandel help
 *
-* Valid mandeltypes:
+* Supported types:
 *   sponge: Makes a Menger Sponge.  Iteration size 1-6.
 *   dust: Makes Cantor Dust.  Iteration size 1-6.
 *   koch: Makes a Quadratic Koch Surface.  Iteration size 1-6.
@@ -23,22 +19,15 @@
 *   octahedron: Makes an Octahedron Fractal.  Iteration size 1-5.
 *   dodecahedron: working...
 *   box: Makes a mandelbox.  Size is dimensional value (5-255).
-         Additional arguments: 
-            - arg4 is the mandelbox scale.  Choose a value between -3 and 3.
-            - arg5 is the bailout value.  Choose smaller values if abs(scale) is low.
-              Recommended range: 3-8
-            - arg6 is the minimum iteration for placing blocks.  I recommend a value of ~4.
-            - arg7 is the iteration range.  I recommend a value between 3 and 8.
-            - arg8 is a zoom factor.  Best results are between 4 and 8, usually.
 *   bulb: Makes a Mandelbulb.  Size is dimensional value (5-255).
 *   cBulb: Makes a custom Mandelbulb (slower). Size is dimensional value (5-255).
 */
-
+ 
 importPackage(Packages.java.io);
 importPackage(Packages.java.awt);
 importPackage(Packages.com.sk89q.worldedit);
 importPackage(Packages.com.sk89q.worldedit.blocks);
-
+ 
 // get data
 var blocks = context.remember();
 var session = context.getSession();
@@ -47,17 +36,18 @@ var region = session.getRegion();
 // writer
 var writer = null;
 writer = new BufferedWriter(new FileWriter("MandelLog.txt"));
-
+ 
 // process arguments
-context.checkArgs(3, 8, "<blocktype> <mandeltype> <size> [arg4] [arg5] [arg6] [arg7] [arg8]");
+context.checkArgs(1, 8, "<blocktype> <mandeltype> <size> [arg4] [arg5] [arg6] [arg7] [arg8]");
 var bt = argv[1];
 var mandeltype = argv[2];
 var d = argv[3];
-
+var cg = "\u00a7b";
+ 
 // process block type for non-palette fractals
-if ((mandeltype != "bulb") && (mandeltype != "cBulb") && (mandeltype != "box"))
+if ((mandeltype != "bulb") && (mandeltype != "cBulb") && (mandeltype != "box") && (argv[1] != "help"))
     var blocktype = context.getBlock(argv[1]);
-
+ 
 // set global variables
 var pi = 3.141592653589793; // pi
 var gr = (1 + Math.pow(5, 0.5))/2; // golden ratio
@@ -67,43 +57,121 @@ var tfSub = 1.0;
 var amplitude = 8;
 var thetaAdj = 0.000001; // used to prevent division by 0
 var phiAdj = 0.0000001; // used to prevent division by 0
-
-/* 
+var vs = "1.1";
+var bthelp = "For blocktype put any valid block ID or name.\n";
+var ithelp = "For iteration put an integer value 1 < n < ";
+var pthelp = "For palette put any valid palette or blocktype.\n";
+var szhelp = "For size put any integer value 10 < n < 256\n";
+var palettelist = ["default", "wool", "plant", "nether", "mine", "city", "wooden",
+                    "frozen", "hot", "rocky", "test", "tropic", "fire", "ocean", "grayscale",
+                    "blue", "blackNwhite", "blueGold"];
+var typelist = ["sponge", "dust", "koch", "cross", "hilbert", "octahedron", "bulb", "box", "cbulb"];
+var exttypelist = ["cube", "plane", "pentagon", "sponge", "dust", "koch", "cross",
+                   "hilbert", "octahedron", "dodecahedron", "dodec", "bulb", "box", "cbulb"];
+var typehelp = ["\n"+cg+"Generates a Menger Sponge. \n"+
+                cg+"Usage: /cs mandel <blocktype> sponge <iteration>\n"+
+                cg+bthelp+
+                cg+ithelp+"6\n"+
+                cg+"e.g. /cs mandel stone sponge 4, /cs mandel 18:5 sponge 3",
+               
+                "\n"+cg+"Generates Cantor Dust. \n"+
+                cg+"Usage: /cs mandel <blocktype> dust <iteration>\n"+
+                cg+bthelp+
+                cg+ithelp+"6\n"+
+                cg+"e.g. /cs mandel glowstone dust 3, /cs mandel 129 dust 4",
+               
+                "\n"+cg+"Generates a Quadratic Koch Surface. \n"+
+                cg+"Usage: /cs mandel <blocktype> koch <iteration>\n"+
+                cg+bthelp+
+                cg+ithelp+"6\n"+
+                cg+"e.g. /cs mandel grass koch 3, /cs mandel 49 koch 4",
+               
+                "\n"+cg+"Generates a Greek Cross Fractal. \n"+
+                cg+"Usage: /cs mandel <blocktype> cross <iteration>\n"+
+                cg+bthelp+
+                cg+ithelp+"8\n"+
+                cg+"e.g. /cs mandel brick cross 3, /cs mandel 35:14 cross 4",
+               
+                "\n"+cg+"Generates a 3d Hilbert Curve. \n"+
+                cg+"Usage: /cs mandel <blocktype> hilbert <iteration>\n"+
+                cg+bthelp+
+                cg+ithelp+"6\n"+
+                cg+"e.g. /cs mandel grass hilbert 3, /cs mandel 48 hilbert 4",
+               
+                "\n"+cg+"Generates an Octahedron Fractal. \n"+
+                cg+"Usage: /cs mandel <blocktype> octahedron <iteration>\n"+
+                cg+bthelp+
+                cg+ithelp+"6\n"+
+                cg+"e.g. /cs mandel ironblock octahedron 3, /cs mandel 22 octahedron 4",
+                
+                "\n"+cg+"Generates a Mandelbulb. \n"+
+                cg+"Usage: /cs mandel <palette> bulb <size>\n"+
+                cg+pthelp+
+                cg+szhelp+
+                cg+"e.g. /cs mandel test bulb 60, /cs mandel ocean bulb 100",
+                
+                "\n"+cg+"Generates a Mandelbox. \n"+
+                cg+"Usage: /cs mandel <palette> box <size> <scale> <bailout>\n"+
+                cg+" <itmin> <iterations> <zoom>\n"+
+                cg+pthelp+
+                cg+szhelp+
+                cg+"For scale choose a positive or negative value 1.1 < abs(n) < 4\n"+
+                cg+"For bailout choose a positive value that is around 2.5*scale.\n"+
+                cg+"For itmin choose a positive value 2 < n < 8\n"+
+                cg+"For iterations choose a positive value 2 < n < 17\n"+
+                cg+"For zoom choose a positive value 2 < n < 20\n"+
+                cg+"e.g. /cs mandel grayscale box 75 -1.75 3.8 4 5 4\n"+
+                cg+"/cs mandel test box 50 2 6 4 5 8",
+                
+                "\n"+cg+"Generates a Custom Mandelbulb. \n"+
+                cg+"Usage: /cs mandel <palette> cbulb <size> <power> <bailout>\n"+
+                cg+" <itmin> <iterations>\n"+
+                cg+pthelp+
+                cg+szhelp+
+                cg+"For power choose a positive value 1 < n < 33\n"+
+                cg+"For bailout choose a positive value that is ~1024.\n"+
+                cg+"For itmin choose a positive value 0 < n < 20\n"+
+                cg+"For iterations choose a positive value 0 < n < 17\n"+
+                cg+"e.g. /cs mandel fire cbulb 64 10 1024 4 12",
+                
+                ];
+ 
+/*
 * >>> Block Lists (palettes) <<<
 * These are some palettes for use in generation of mandelbulbs and mandelboxes.  
 * Lower locations in the lists are more likely to be used, as per the percentage
-* distribution array provided below, which was concluded from data from a 50x50x50 
+* distribution array provided below, which was concluded from data from a 50x50x50
 * mandelbulb.
 *
-* Percentage distribution: [32.6%, 14.8%, 11.6%, 6.6%, 7.1%, 4.5%, 3.7%, 3.1%, 
+* Percentage distribution: [32.6%, 14.8%, 11.6%, 6.6%, 7.1%, 4.5%, 3.7%, 3.1%,
                              3.1%,   2.5%, 2.1%, 1.8%, 1.4%, 1.3%, 1.5%, 1.2%]
 *
-* When making your own palettes, I recommend against using gravity-affected blocks 
-* (e.g. sand, gravel, water, lava) at any percentage higher than 2%.  These blocks 
+* When making your own palettes, I recommend against using gravity-affected blocks
+* (e.g. sand, gravel, water, lava) at any percentage higher than 2%.  These blocks
 * will cause major lag and will obscure the generated object from view.
 */
 var defaultBlockList = [1, 3, 3, 24, 1, 4, 24, 24, 12, 1, 3, 2, 1, 3, 82, 2];
-// [35:0] White Wool, [35:8] Light Gray Wool, [35:7] Gray Wool, [35:15] Black Wool, 
+// [35:0] White Wool, [35:8] Light Gray Wool, [35:7] Gray Wool, [35:15] Black Wool,
 // [35:14] Red Wool, [35:1] Orange Wool, [35:4] Yellow Wool, [35:5] Light Green Wool,
-// [35:13] Green Wool, [35:9] Cyan Wool, [35:3] Light Blue Wool, [35:11] Blue Wool, 
+// [35:13] Green Wool, [35:9] Cyan Wool, [35:3] Light Blue Wool, [35:11] Blue Wool,
 // [35:10] Purple Wool, [35:2] Violet Wool, [35:6] Pink Wool, [35:12] Brown Wool
 var woolBlockList = ["35:0", "35:0", "35:0", "35:0", "35:0", "35:8", "35:8", "35:8",  
                      "35:8", "35:14", "35:14", "35:6", "35:4", "35:5", "35:11", "35:3"];
-// [2] Grass, [17:0] Oak Wood, [17:1] Spruce Wood, [17:3] Jungle Wood, [17:4] Acacia Wood, 
-// [17:5] Dark Oak Wood, [18:0] Oak Leaves, [18:1] Spruce Leaves, [18:3] Jungle Leaves, 
+// [2] Grass, [17:0] Oak Wood, [17:1] Spruce Wood, [17:3] Jungle Wood, [17:4] Acacia Wood,
+// [17:5] Dark Oak Wood, [18:0] Oak Leaves, [18:1] Spruce Leaves, [18:3] Jungle Leaves,
 // [18:4] Acacia Leaves, [18:5] Dark Oak Leaves, [106] Vines
 //var plantBlockList = [2, "18:0", "18:1", 2, "18:2", "18:3", 2, "17:1", 2, "17:0", "17:3", 2, "17:1", 2, 2, 2];
 var plantBlockList = [2, 2, "18:0", "17:0", "18:1", "17:1", "18:3", "17:3", "18:4", "17:4", "18:5", "17:5", 106, 106, 2, 2];
-// [87] Netherrack, [49] Obsidian, [7] Bedrock, [89] Glowstone, [88] Soul Sand, [13] Gravel, 
+// [87] Netherrack, [49] Obsidian, [7] Bedrock, [89] Glowstone, [88] Soul Sand, [13] Gravel,
 var netherBlockList = [87, 87, 87, 49, 7, 7, 87, 49, 87, 87, 87, 89, 89, 88, 13, 13];
 // [1] Stone, [3] Dirt, [13] Gravel,[16] Coal, [15] Iron, [73] Redstone, [14] Gold, [56] Diamond, [129] Emerald
 var mineBlockList = [1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 13, 16, 15, 73, 14, 56];
-// [1] Stone, [20] Glass, [44:0] Stone Slab, [44:5] Stone Bricks Slab, [43:0] Double Stone Slab, 
+// [1] Stone, [20] Glass, [44:0] Stone Slab, [44:5] Stone Bricks Slab, [43:0] Double Stone Slab,
 // [42] Iron, [45] Bricks, [44:4] Bricks Slab, [35:3] Light Blue Wool, [35:11] Blue Wool
 var cityBlockList = [1, 20, 42, "44:0", "44:5", "43:0", 1, 42, 20, 1, 20, 1, "35:3", "35:11", 45, "44:4"];
-// [5:0] Oak Wood Planks, [5:1] Spruce Wood Planks, [5:3] Jungle Wood Planks, [5:4] Acacia Wood Planks, 
-// [5:5] Dark Oak Wood Planks, [17:0] Oak Wood, [17:1] Spruce Wood, [17:3] Jungle Wood, 
-// [17:4] Acacia Wood, [17:5] Dark Oak Wood, [85] Fence, [53] Oak Wood Stairs, [134] Spruce Wood Stairs, 
+// [5:0] Oak Wood Planks, [5:1] Spruce Wood Planks, [5:3] Jungle Wood Planks, [5:4] Acacia Wood Planks,
+// [5:5] Dark Oak Wood Planks, [17:0] Oak Wood, [17:1] Spruce Wood, [17:3] Jungle Wood,
+// [17:4] Acacia Wood, [17:5] Dark Oak Wood, [85] Fence, [53] Oak Wood Stairs, [134] Spruce Wood Stairs,
 // [135] Birch Wood Stairs, [136] Jungle Wood Stairs
 var woodenBlockList = ["5:0", "5:1", "5:3", "5:4", "5:5", 85, 85, "17:0", "17:1", "17:3", "17:4", "17:5", 53, 134, 135, 136];
 // [79] Ice Block, [20] Glass, [35:3] Light Blue Wool, [35:9] Cyan Wool, [35:11] Blue Wool,
@@ -112,38 +180,38 @@ var frozenBlockList = [79, 79, 20, 79, "35:3", "35:9", "35:11", 80, 22, 79, 79, 
 // [152] Redstone Block, [35:14] Red Wool, [35:1] Orange Wool, [35:4] Yellow Wool, [41] Gold Block
 // [87] Netherrack, [89] Glowstone
 var hotBlockList = [152, "35:14", "35:1", "35:4", 41, 87, 87, 87, 152, "35:14", "35:1", "35:4", 87, 89, 152, 152, 152];
-// [1] Stone, [4] Cobblestone, [7] Bedrock, [13] Gravel, [35:7] Dark Gray Wool, [35:8] Light Gray Wool, 
+// [1] Stone, [4] Cobblestone, [7] Bedrock, [13] Gravel, [35:7] Dark Gray Wool, [35:8] Light Gray Wool,
 // [43:0] Double Stone Slab, [43:5] Stone Bricks Slab, [98:3] Chiseled Stone, [82] Clay, [16] Coal Vein
 var rockyBlockList = [1, 4, 7, 1, "35:7", "35:8", "43:0", "43:5", "98:3", 82, 1, 4, 7, 13, "35:7", 16];
-// [35:0] White Wool, [35:8] Light Gray Wool, [35:7] Gray Wool, [35:15] Black Wool, 
+// [35:0] White Wool, [35:8] Light Gray Wool, [35:7] Gray Wool, [35:15] Black Wool,
 // [35:14] Red Wool, [35:1] Orange Wool, [35:4] Yellow Wool, [35:5] Light Green Wool,
-// [35:13] Green Wool, [35:9] Cyan Wool, [35:3] Light Blue Wool, [35:11] Blue Wool, 
+// [35:13] Green Wool, [35:9] Cyan Wool, [35:3] Light Blue Wool, [35:11] Blue Wool,
 // [35:10] Purple Wool, [35:2] Violet Wool, [35:6] Pink Wool, [35:12] Brown Wool
 var testBlockList = ["35:0", "35:8", "35:7", "35:15", "35:14", "35:1", "35:4", "35:5",
                      "35:13", "35:9", "35:3", "35:11", "35:10", "35:2", "35:6", "35:12"];
 // tropic wool
-var tropicWoolBlockList = ["35:0", "35:8", "35:7", "35:13", "35:3", "35:11", "35:10", "35:2", 
+var tropicWoolBlockList = ["35:0", "35:8", "35:7", "35:13", "35:3", "35:11", "35:10", "35:2",
                       "35:0", "35:8", "35:7", "35:13", "35:3", "35:11", "35:10", "35:2"];
 // fire wool
-var fireWoolBlockList = ["35:14", "35:1", "35:4", "35:6", "35:0", "35:8", "35:7", "35:15", 
+var fireWoolBlockList = ["35:14", "35:1", "35:4", "35:6", "35:0", "35:8", "35:7", "35:15",
                       "35:14", "35:1", "35:4", "35:6", "35:0", "35:8", "35:7", "35:15"];
 // ocean wool
-var oceanWoolBlockList = ["35:11", "35:3", "35:9", "35:13", "35:5", "35:10", "35:7", "35:15", 
+var oceanWoolBlockList = ["35:11", "35:3", "35:9", "35:13", "35:5", "35:10", "35:7", "35:15",
                       "35:11", "35:3", "35:9", "35:13", "35:5", "35:10", "35:7", "35:15"];
 // grayscale
 var grayscaleBlockList = ["35:0", "35:8", 1, "43:8", 4, "35:7", 7, "35:15",
                           "35:0", "35:8", 1, "43:8", 4, "35:7", 7, "35:15"];
 // blue
-var blueBlockList = ["35:11", "35:3", "35:9", 22, "35:0", "35:8", "35:7", "35:15", 
+var blueBlockList = ["35:11", "35:3", "35:9", 22, "35:0", "35:8", "35:7", "35:15",
                      "35:11", "35:3", "35:9", 22, "35:0", "35:8", "35:7", "35:15"];
 // blackNwhite
-var blackNwhiteBlockList = ["35:0", "35:15", 42, 49, "43:7", 173, 80, "35:7", 
+var blackNwhiteBlockList = ["35:0", "35:15", 42, 49, "43:7", 173, 80, "35:7",
                             "35:0", "35:15", 42, 49, "43:7", 173, 80, "35:7"];
 // blueGold
 var blueGoldBlockList = ["35:11", "35:3", "35:9", 172, "159:1", "35:1", "35:4", 41,
                          24, 42, 80, "35:0", "35:0", "35:0", "35:0", "35:0"];
-                            
-                            
+                           
+                           
 // process palette choice
 if (bt.equals("default"))
     var activeBlockList = defaultBlockList
@@ -180,13 +248,49 @@ else if (bt.equals("blue"))
 else if (bt.equals("blackNwhite"))
     var activeBlockList = blackNwhiteBlockList
 else if (bt.equals("blueGold"))
-    var activeBlockList = blueGoldBlockList
-else
+    var activeBlockList = blueGoldBlockList;
+else if (!bt.equals("help"))
     var blocktype = context.getBlock(argv[1]);
-
+ 
 // this is where we use mandeltype to decide what to make
 function main() {
-    if (mandeltype == "cube") {
+    if (argv[1] == "help") {
+         if (argv.length < 3) {
+             context.print("\n"+cg+"Mandel.js v"+vs);
+             var suptypes = "Supported types: ";
+             for (var i = 0; i < typelist.length; i++) {
+                 if (i != 0)
+                     suptypes += ", "+cg;
+                 suptypes += typelist[i];
+             }
+             context.print(cg+suptypes);
+             context.print(cg+"Use /cs mandel help <type> with a supported type to get "+
+                           cg+"information on how to use that type.")
+             context.print(cg+"Use /cs mandel help palettes to see a list of valid palettes.");
+         }
+         else {
+             if (argv[2] == "palettes") {
+                  var palettes = "\n"+cg+"Palettes: ";
+                  for (var i = 0; i < palettelist.length; i++) {
+                      if (i != 0)
+                          palettes += ", "+cg;
+                      palettes += palettelist[i];
+                  }
+                  context.print(palettes);
+             }
+             else {
+                  for (var i = 0; i < typelist.length; i++) {
+                      if (argv[2] == typelist[i]) {
+                          context.print(typehelp[i]);
+                          break;
+                      }
+                  }
+             }
+         }
+         writer.close();
+         return;
+    }
+    else if (mandeltype == "cube") {
         context.print("Generating a "+d+"x"+d+"x"+d+" Cube... \n");
         cube(d, 0, 0, 0);
     }
@@ -224,7 +328,7 @@ function main() {
         pentagon(vec0, vec1, vec2);
     }
     else if (mandeltype == "sponge") {
-        if (d > 6) {
+        if (d > 5) {
             context.print("Can't generate a level "+d+" Menger Sponge!  (Too big)");
             return;
         }
@@ -233,7 +337,7 @@ function main() {
         sponge(d, 0, 0, 0);
     }
     else if (mandeltype == "dust") {
-        if (d > 6) {
+        if (d > 5) {
             context.print("Can't generate level "+d+" Cantor Dust!  (Too big)");
             return;
         }
@@ -242,7 +346,7 @@ function main() {
         dust(d, 0, 0, 0);
     }
     else if (mandeltype == "koch") {
-        if (d > 6) {
+        if (d > 5) {
             context.print("Can't generate a level "+d+" Quadratic Koch Surface!  (Too big)");
             return;
         }
@@ -251,7 +355,7 @@ function main() {
         koch(d, 0, 0, 0, 0);
     }
     else if (mandeltype == "cross") {
-        if (d > 6) {
+        if (d > 7) {
             context.print("Can't generate a level "+d+" Greek Cross Fractal!  (Too big)");
             return;
         }
@@ -260,7 +364,7 @@ function main() {
         cross(d, 0, 0, 0, 3, 0);
     }
     else if (mandeltype == "hilbert") {
-        if (d > 6) {
+        if (d > 5) {
             context.print("Can't generate a level "+d+" Hilbert Curve!  (Too big)");
             return;
         }
@@ -268,7 +372,7 @@ function main() {
         hilbert(d);
     }
     else if (mandeltype == "octahedron") {
-        if (d > 6) {
+        if (d > 5) {
             context.print("Can't generate a level "+d+" Octahedron Fractal!  (Too big)");
             return;
         }
@@ -304,21 +408,33 @@ function main() {
         hilbertTurtle(d);
     }*/
     else if (mandeltype == "bulb") {
+        if (d > 255) {
+            context.print("Can't generate a "+d+"x"+d+"x"+d+" Mandelbulb!  (Too big)");
+            return;
+        }
         context.print("Generating a "+d+"x"+d+"x"+d+" Mandelbulb... \n");
         bulb();
     }
     else if (mandeltype == "box") {
+        if (d > 255) {
+            context.print("Can't generate a "+d+"x"+d+"x"+d+" Mandelbox!  (Too big)");
+            return;
+        }
         context.print("Generating a "+d+"x"+d+"x"+d+" Mandelbox... \n");
         box();
     }
-    else if (mandeltype == "cBulb") {
+    else if (mandeltype == "cbulb") {
+        if (d > 255) {
+            context.print("Can't generate a "+d+"x"+d+"x"+d+" Mandelbulb!  (Too big)");
+            return;
+        }
         context.print("Generating a custom "+d+"x"+d+"x"+d+" Mandelbulb... \n");
         cBulb();
     }
     context.print("Placed "+volume+" blocks!");
     writer.close();
 }
-
+ 
 // making a basic cube
 function cube(d0, wOffset, hOffset, lOffset) {
     for (var h = 0; h < d0; h++) {
@@ -334,7 +450,7 @@ function cube(d0, wOffset, hOffset, lOffset) {
         }
     }
 }
-
+ 
 // making a plane from two vectors
 function plane(vec1, vec2) {
     var v1mag = mag(vec1);
@@ -354,12 +470,12 @@ function plane(vec1, vec2) {
     volume = v1mag * v2mag;
     volume = volume - volume % 1;
 }
-
+ 
 // making a pentagon from three vectors
 function pentagon(vec0, vec1, vec2) {
     var v1mag = mag(vec1);
     var v2mag = mag(vec2);
-    
+   
     for (var i = -v1mag; i <= v1mag; i++) {
         for (var j = -v2mag; j <= v2mag; j++) {
             var iPer = i/v1mag;
@@ -380,7 +496,7 @@ function pentagon(vec0, vec1, vec2) {
         }
     }
 }
-
+ 
 // making a menger sponge
 function sponge(d0, wOffset, hOffset, lOffset) {
     // return if d0 = 1
@@ -394,10 +510,10 @@ function sponge(d0, wOffset, hOffset, lOffset) {
         volume++;
         return;
     }
-    
+   
     // 1/3 and 2/3 of side length
     var d1 = d0/3;
-    
+   
     // recursion loop
     for (var h = 0; h < 3; h++) {
         for (var w = 0; w < 3; w++) {
@@ -421,7 +537,7 @@ function sponge(d0, wOffset, hOffset, lOffset) {
         }
     }
 }
-
+ 
 // making cantor dust
 function dust(d0, wOffset, hOffset, lOffset) {
     // return if d0 = 1
@@ -435,10 +551,10 @@ function dust(d0, wOffset, hOffset, lOffset) {
         volume++;
         return;
     }
-    
+   
     // 1/3 of side length
     var d1 = d0/3;
-    
+   
     // recursion loop
     for (var h = 0; h < 3; h++) {
         if (h == 1)
@@ -464,7 +580,7 @@ function dust(d0, wOffset, hOffset, lOffset) {
         }
     }
 }
-
+ 
 // quadratic koch surface recursion master function
 function kochRe(d1, wOffset, hOffset, lOffset, mode, wS, hS, lS) {
     var wR = 1;
@@ -500,16 +616,16 @@ function kochRe(d1, wOffset, hOffset, lOffset, mode, wS, hS, lS) {
     if (lS >= 1)
         koch(d1, wS*d1 + wOffset, hS*d1 + hOffset, (lS - 1)*d1 + lOffset, 5);
 }
-
+ 
 // making a quadratic koch surface
 function koch(d0, wOffset, hOffset, lOffset, mode) {
     // return if d0 = 1
     if (d0 == 1)
         return;
-    
+   
     // 1/3 and 2/3 of side length
     var d1 = d0/3;
-    
+   
     // use mode to recurse
     var h = 1;
     var w = 1;
@@ -548,7 +664,7 @@ function koch(d0, wOffset, hOffset, lOffset, mode) {
         break;
     }
 }
-
+ 
 // making a greek cross fractal
 function cross(d0, wOffset, hOffset, lOffset, scale, mode) {
     var d1 = (d0 - 1)/2;
@@ -601,7 +717,7 @@ function cross(d0, wOffset, hOffset, lOffset, scale, mode) {
     cross(d1 - 1, d1/2 + wOffset, d1 + hOffset, d1/2 + lOffset, scale, 2);
     cross(d1 - 1, d1/2 + wOffset, d1/2 + hOffset, d1 + lOffset, scale, 3);
 }
-
+ 
 // octahedron fractal
 function octahedron(d0, wOffset, hOffset, lOffset) {
     var oscale = 7;
@@ -623,7 +739,7 @@ function octahedron(d0, wOffset, hOffset, lOffset) {
                     }
                 }
             }
-            if (h > d1 - 1) 
+            if (h > d1 - 1)
                 width--
             else
                 width++;
@@ -638,7 +754,7 @@ function octahedron(d0, wOffset, hOffset, lOffset) {
         octahedron(d1, d1 + 1 + wOffset, d2 + 1 + hOffset, d2 + 1 + lOffset); // far left octahedron
     }
 }
-
+ 
 function sdodec(d0, xOffset, yOffset, zOffset) {
     var d1 = d0/2;
     var a = d1/1.401258538; // side length of dodecahedron, definition d1 = r_u
@@ -648,7 +764,7 @@ function sdodec(d0, xOffset, yOffset, zOffset) {
     var k = Math.sin(d2r(54))*t*b + c; // plane shift constant 1
     var m = b - Math.sin(d2r(54))*b; // plane shift constant 2
     var cont = false;
-    
+   
     var p = [0,0,0,0,0,0,0,0,0,0,0,0];
     for (var x = -d1; x < d1; x++) {
         for (var z = -d1; z < d1; z++) {
@@ -692,14 +808,14 @@ function sdodec(d0, xOffset, yOffset, zOffset) {
         }
     }
 }
-
+ 
 function hdodec(d0) {
     var d1 = d0/2;
     //var d0 = d0/1;
     var gr = (1 + Math.pow(5, 0.5))/2;
     var a = d1/1.113516364; // side length of dodecahedron, definition d1 = r_i
     var b = a/2 + a*Math.cos(d2r(72)); // vector length for pentagon plane unit vectors
-    
+   
     // center vector points to center of dodecahedron
     var center = new Vector(
         region.getMinimumPoint().getX() + d1,
@@ -707,8 +823,8 @@ function hdodec(d0) {
         region.getMinimumPoint().getZ() + d1);
     // pointer vector points to origin of pentagons to be generated from center of dodecahedron
     var pointer = new Vector(0, -1.113516364*a, 0);
-    
-    // bottom pentagon 
+   
+    // bottom pentagon
     var vec0 = new Vector(
         center.getX() + pointer.getX(),
         center.getY() + pointer.getY(),
@@ -719,7 +835,7 @@ function hdodec(d0) {
     blocks.setBlock(vec0, context.getBlock("35:14"));
     blocks.setBlock(add(vec0, vec1), context.getBlock("35:11"));
     blocks.setBlock(add(vec0, vec2), context.getBlock("35:4"));
-    
+   
     // bottom pentagons
         // 1
         pointer = rot(pointer, 0, d2r(-63.4349487), 1);
@@ -750,8 +866,8 @@ function hdodec(d0) {
             vec2 = rot(vec2, 1, d2r(-72), 1);
             pentagon(vec0, vec1, vec2);
         }
-    
-    
+   
+   
     // top pentagon
     pointer = Vector(0, 1.113516364*a, 0);
     vec0 = Vector(
@@ -765,7 +881,7 @@ function hdodec(d0) {
     blocks.setBlock(vec0, context.getBlock("35:14"));
     blocks.setBlock(add(vec0, vec1), context.getBlock("35:11"));
     blocks.setBlock(add(vec0, vec2), context.getBlock("35:4"));
-    
+   
     // top pentagons
         // 1
         pointer = rot(pointer, 0, d2r(63.4349487), 1);
@@ -798,13 +914,13 @@ function hdodec(d0) {
             pentagon(vec0, vec1, vec2);
         }
 }
-
+ 
 // dodecahedron fractal
 function dodecahedron(d0, wOffset, hOffset, lOffset) {
     var scale = 1/(2 + gr);
     var d1 = Math.round(scale*d0);
     context.print("d0 = "+d0+"  d1 = "+d1);
-    
+   
     // make dodec or recurse
     if (d1 < 20)
         sdodec(d0, wOffset, hOffset, lOffset)
@@ -816,12 +932,12 @@ function dodecahedron(d0, wOffset, hOffset, lOffset) {
         var rni = scale*ri;
         var r18 = d2r(18);
         var r54 = d2r(54);
-        
+       
         // initial x,y,z for bottom layer
         var x = wOffset;
         var y = hOffset + (ru - ri);
         var z = lOffset;
-        
+       
         //x and z for bottom & top layers
         var x1 = x + (ru - rnu)*(1 - Math.cos(r18));
         var z1 = z + (ru - ri) - (rnu - rni);
@@ -831,19 +947,19 @@ function dodecahedron(d0, wOffset, hOffset, lOffset) {
         var x4 = x3 + 2*Math.cos(r54)*ru;
         var x5 = x + 2*ru - 2*rnu;
         var z5 = z + ru - rnu;
-        
+       
         // bottom layer
         dodecahedron(d1, x1, y, z1);
         dodecahedron(d1, x2, y, z1);
         dodecahedron(d1, x3, y, z3);
         dodecahedron(d1, x4, y, z3);
         dodecahedron(d1, x5, y, z5);
-        
+       
         // intial y for top layer
         var y = y + 2*ri;
     }
 }
-
+ 
 // hilbert curve rotation functions
     // rotate around the x-axis in the positive y direction
     function xp(s) {
@@ -856,7 +972,7 @@ function dodecahedron(d0, wOffset, hOffset, lOffset) {
         s = s.split(".").join("D");
         return s;
     }
-    
+   
     // rotate around the x-axis in the negative y direction
     function xn(s) {
         s = s.split("F").join("^"); // forward becomes up
@@ -868,7 +984,7 @@ function dodecahedron(d0, wOffset, hOffset, lOffset) {
         s = s.split(".").join("D");
         return s;
     }
-    
+   
     // rotate around the y-axis in the positive x direction
     function yp(s) {
         s = s.split("F").join("<"); // forward becomes left
@@ -880,7 +996,7 @@ function dodecahedron(d0, wOffset, hOffset, lOffset) {
         s = s.split(">").join("R");
         return s;
     }
-    
+   
     // rotate around the y-axis in the negative x direction
     function yn(s) {
         s = s.split("F").join(">"); // forward becomes right
@@ -892,7 +1008,7 @@ function dodecahedron(d0, wOffset, hOffset, lOffset) {
         s = s.split(">").join("R");
         return s;
     }
-    
+   
     // rotate around the z axis in the positive x direction
     function zp(s) {
         s = s.split("U").join("<"); // up becomes left
@@ -904,7 +1020,7 @@ function dodecahedron(d0, wOffset, hOffset, lOffset) {
         s = s.split("<").join("L");
         return s;
     }
-    
+   
     // rotate around the z axis in the negative x direction
     function zn(s) {
         s = s.split("U").join(">"); // up becomes right
@@ -916,7 +1032,7 @@ function dodecahedron(d0, wOffset, hOffset, lOffset) {
         s = s.split("<").join("L");
         return s;
     }
-    
+   
     // reverse string
     function rv(s) {
         s = s.split("").reverse().join("");
@@ -933,7 +1049,7 @@ function dodecahedron(d0, wOffset, hOffset, lOffset) {
         return s;
     }
 // end of rotation functions
-
+ 
 // hilbert curve resolve function (turns string into function call and result)
 function resolve(s) {
     var func = s.substring(0, 2);
@@ -953,14 +1069,14 @@ function resolve(s) {
     if (func == "rv")
         return rv(input);
 }
-
-// making a 3d hilbert curve 
+ 
+// making a 3d hilbert curve
 function hilbert(d0) {
     var hScale = 2;
     var A = "F R B D F L B";
     var curve = "A";
     var rs = "rv(xp(!)) F zp(!) R ! B yn(xn(!)) D yn(xp(!)) F ! L zn(!) B rv(xn(!))";
-    
+   
     var iterations = 1;
     // iterate generation string
     while (iterations < d0) {
@@ -968,7 +1084,7 @@ function hilbert(d0) {
         curve = curve.replace(/\!/g, "A");
         iterations++;
     }
-    
+   
     // evaluate functions and axioms in generation string
     curve = curve.replace(/\A/g, A);
     //writer.write("curve is: \n\n"+curve);
@@ -983,7 +1099,7 @@ function hilbert(d0) {
         curve = curve.replace(s3, resolve(s3.substr(0, s3.length - 1)));
     }
     writer.write("\n\ncurve is: \n\n"+curve);
-    
+   
     // calculate maximum height
     var hMax = hScale;
     for (var i = 1; i < d0; i++)
@@ -996,7 +1112,7 @@ function hilbert(d0) {
     blocks.setBlock(vec, blocktype);
     volume++;
     for (var i = 0; i < curve.length; i++) {
-        if (curve.charAt(i) == ' ') 
+        if (curve.charAt(i) == ' ')
             continue;
         if (curve.charAt(i) == 'F') {
             for (var j = 0; j < hScale; j++) {
@@ -1060,30 +1176,30 @@ function hilbert(d0) {
         }
     }
 }
-
+ 
 // matrix multiplication
 function matrixMultiply(a, b) {
     var result = [
-        [0, 0, 0], 
-        [0, 0, 0], 
+        [0, 0, 0],
+        [0, 0, 0],
         [0, 0, 0]
     ];
-    
+   
     result[0][0] = a[0][0]*b[0][0] + a[0][1]*b[1][0] + a[0][2]*b[2][0];
     result[0][1] = a[0][0]*b[0][1] + a[0][1]*b[1][1] + a[0][2]*b[2][1];
     result[0][2] = a[0][0]*b[0][2] + a[0][1]*b[1][2] + a[0][2]*b[2][2];
-
+ 
     result[1][0] = a[2][1]*b[0][0] + a[1][1]*b[1][0] + a[1][2]*b[2][0];
     result[1][1] = a[2][1]*b[0][1] + a[1][1]*b[1][1] + a[1][2]*b[2][1];
     result[1][2] = a[1][0]*b[0][2] + a[1][1]*b[1][2] + a[1][2]*b[2][2];
-    
+   
     result[2][0] = a[2][0]*b[0][0] + a[2][1]*b[1][0] + a[2][2]*b[2][0];
     result[2][1] = a[2][0]*b[0][1] + a[2][1]*b[1][1] + a[2][2]*b[2][1];
     result[2][2] = a[2][0]*b[0][2] + a[2][1]*b[1][2] + a[2][2]*b[2][2];
-    
+   
     return result;
 }
-
+ 
 // rotate around dimension dim
 function rot(m, dim, a, mode) {
     switch(dim) {
@@ -1109,28 +1225,28 @@ function rot(m, dim, a, mode) {
             ];
             break;
     }
-    
+   
     switch(mode) {
     case 0:
         return matrixMultiply(m, n);
         break;
     case 1:
         var vec = new Vector(
-            m.getX() * n[0][0] + m.getY() * n[0][1] + m.getZ() * n[0][2], 
-            m.getX() * n[1][0] + m.getY() * n[1][1] + m.getZ() * n[1][2], 
+            m.getX() * n[0][0] + m.getY() * n[0][1] + m.getZ() * n[0][2],
+            m.getX() * n[1][0] + m.getY() * n[1][1] + m.getZ() * n[1][2],
             m.getX() * n[2][0] + m.getY() * n[2][1] + m.getZ() * n[2][2]);
         return vec;
         break;
     }
 }
-
+ 
 // making a 3d hilbert curve with turtle method
 function hilbertTurtle(d0) {
     /*var hScale = 3;
     var curve = "A";
     var rs = ".X>.F+X<F<AF.AFA";
     var rss = "F>F>F.F.F<F<F++";
-    
+   
     var iterations = 0;
     // iterate generation string
     while (iterations < d0) {
@@ -1140,11 +1256,11 @@ function hilbertTurtle(d0) {
         curve = curve.replace(/\@/g, "X");
         iterations++;
     }
-    
+   
     //curve = curve.replace(/\A/g, "^<F^<F-F^>>F&F->>F+F>->");
     writer.write("curve is: \n\n"+curve);
     writer.write("\n\n");
-    
+   
     // calculate maximum height
     var hMax = hScale;
     for (var i = 1; i < d0; i++)
@@ -1167,7 +1283,7 @@ function hilbertTurtle(d0) {
         // interpret F as DrawForward(hScale)
         if (curve.charAt(i) == "F") {
             for (var j = 0; j < hScale; j++) {
-                
+               
                 vec = Vector(w, h, l);
                 blocks.setBlock(vec, blocktype);
                 volume++;
@@ -1196,7 +1312,7 @@ function hilbertTurtle(d0) {
     }
     writer.close();*/
 }
-
+ 
 // making a quick mandelbulb
 function bulb() {
     // set local variables
@@ -1219,7 +1335,7 @@ function bulb() {
         [0.328*d, 0.329*d, 0.328*d, 0.328*d, 0.329*d, 0.319*d, 0.328*d, 0.328*d, 0.329*d, 0.328*d],
         [0.338*d, 0.339*d, 0.334*d, 0.334*d, 0.339*d, 0.329*d, 0.334*d, 0.334*d, 0.339*d, 0.338*d]
     ];
-    
+   
     // loop through xyz space
     for (var x = 0; x < d; x++) {
         var xc = (tfMult * x)/d - tfSub;
@@ -1229,25 +1345,25 @@ function bulb() {
                 /* Continue if radius is less than stored mindata value.
                  * This saves a lot of time by not performing itMax iterations
                  * on locations that clearly won't have blocks. */
-                var cVec = new Vector(x - (d/2), y - (d/2), z - (d/2)); 
+                var cVec = new Vector(x - (d/2), y - (d/2), z - (d/2));
                 var r = mag(cVec);
                 var i1 = Math.floor(theta(cVec)/(pi/10));
                 var i2 = Math.floor((phi(cVec) + pi/2)/(pi/10));
                 if (r < mindata[i1][i2])
                     continue;
-                
+               
                 var zc = (tfMult * z)/d - tfSub;
-                
+               
                 var iterations = -1;
                 var C = new Vector(xc, yc, zc);
                 var Z = new Vector(0, 0, 0);
-                
+               
                 // iterate over vectors
                 while ((mag(Z) <= cutoff) && (iterations < itMax)) {
                     Z = add(formula(Z, power), C);
                     iterations++;
                 }
-                
+               
                 // place block if cutoff reached in itMin -> itMax range
                 if ((iterations >= itMin) && (iterations < itMax)) {
                     volume++;
@@ -1265,7 +1381,7 @@ function bulb() {
         }
     }
 }
-
+ 
 // generate a custom mandelbulb
 function cBulb() {
     // set local variables
@@ -1275,7 +1391,7 @@ function cBulb() {
     var itMax = argv[7] > 0 ? parseInt(argv[7]) + itMin : 16 + itMin;
     var tfMult = argv[8] > 0 ? parseFloat(argv[8]) : 2;
     var tfSub = tfMult/2;
-    
+   
     // loop through xyz space
     for (var x = 0; x < d; x++) {
         var xc = (tfMult * x)/d - tfSub;
@@ -1283,17 +1399,17 @@ function cBulb() {
             var yc = (tfMult * y)/d - tfSub;
             for (var z = 0; z < d; z++) {
                 var zc = (tfMult * z)/d - tfSub;
-                
+               
                 var iterations = -1;
                 var C = new Vector(xc, yc, zc);
                 var Z = new Vector(0, 0, 0);
-                
+               
                 // iterate over vectors
                 while ((mag(Z) <= bailout) && (iterations < itMax)) {
                     Z = add(formula(Z, power), C);
                     iterations++;
                 }
-                
+               
                 // place block if cutoff reached in itMin -> itMax range
                 if ((iterations >= itMin) && (iterations < itMax)) {
                     volume++;
@@ -1311,7 +1427,7 @@ function cBulb() {
         }
     }
 }
-
+ 
 // making a mandelbox
 function box() {
     var arg4 = argv[4] > -10 ? parseFloat(argv[4]) : 2;
@@ -1326,16 +1442,16 @@ function box() {
             var yc = (tfmult * y)/(d - 1) - tfsub;
             for (var z = 0; z < d; z++) {
                 var zc = (tfmult * z)/(d - 1) - tfsub;
-
+ 
                 var iterations = -1;
                 C = new Vector(xc, yc, zc);
                 Z = new Vector(0, 0, 0);
-
+ 
                 while ((mag(Z) < arg5) && (iterations < itMaxBox)) {
                     Z = add(mult(arg4, boxformula(Z)), C);
                     iterations++;
                 }
-                
+               
                 if ((iterations >= itMinBox) && (iterations < itMaxBox)) {
                     volume++;
                     if (volume % 10000 == 0)
@@ -1352,57 +1468,57 @@ function box() {
         }
     }
 }
-
+ 
 // mandelbox vector growth formula
 function boxformula(vec) {
     var x = vec.getX();
     var y = vec.getY();
     var z = vec.getZ();
-    
+   
     if (x > 1)
         x = 2 - x
     else if (x < -1)
         x = -2 - x;
-        
+       
     if (y > 1)
         y = 2 - y
     else if (y < -1)
         y = -2 - y;
-    
+   
     if (z > 1)
         z = 2 - z
     else if (z < -1)
         z = -2 - z;
-    
+   
     var output = new Vector(x, y, z);
     var m = mag(output);
-    
+   
     if (m < 0.5)
         output = mult(4, output)
     else if (m < 1)
         output = mult(1/(m*m), output);
-    
+   
     return output;
 }
-
+ 
 // arbitrary rotation treating input vector as z-axis.
 function arot(vec, dim, a) {
     var m = mag(vec);
     // zaxis is unit vector in input vec direction
     var zaxis = new Vector(vec.getX()/m, vec.getY()/m, vec.getZ()/m);
-    
+   
     // xaxis is always in xz plane.
-    if ((zaxis.getX()/abs(zaxis.getX())) + zaxis.getZ()/abs(zaxis.getZ()) == 0) 
+    if ((zaxis.getX()/abs(zaxis.getX())) + zaxis.getZ()/abs(zaxis.getZ()) == 0)
       var xaxis = new Vector(-zaxis.getX(), 0, xaxis.getZ())
-    else 
+    else
       var xaxis = new Vector(zaxis.getX(), 0, -zaxis.getZ());
-    
+   
     // yaxis is in "above" octant.
     if (zaxis.getY()/abs(zaxis.getY()) > 0)
       var yaxis = new Vector(-zaxis.getX(), 1 - zaxis.getY(), -zaxis.getZ())
     else
       var yaxis = new Vector(zaxis.getX(), 1 - zaxis.getY(), zaxis.getZ());
-    
+   
     // rotation matrices
     switch(dim) {
         case 0:
@@ -1427,46 +1543,46 @@ function arot(vec, dim, a) {
             ];
             break;
     }
-    
+   
     // return rotated vector
     var result = new Vector(
         xaxis.getX() * n[0][2] + yaxis.getX()*n[1][2] + zaxis.getX() * n[2][2],
-        xaxis.getY() * n[0][2] + yaxis.getY()*n[1][2] + zaxis.getY() * n[2][2], 
+        xaxis.getY() * n[0][2] + yaxis.getY()*n[1][2] + zaxis.getY() * n[2][2],
         xaxis.getZ() * n[0][2] + yaxis.getZ()*n[1][2] + zaxis.getZ() * n[2][2]);
     return result;
 }
-
+ 
 // vector magnitude function
 // returns the length of the vector
 function mag(vec) {
     var x = vec.getX(), y = vec.getY(), z = vec.getZ();
     return Math.sqrt(x * x + y * y + z * z);
 }
-
+ 
 // vector addition function
 // adds two vectors together
 function add(v1, v2) {
     var x1 = v1.getX(), y1 = v1.getY(), z1 = v1.getZ();
     var x2 = v2.getX(), y2 = v2.getY(), z2 = v2.getZ();
     var output = new Vector(
-        x1+x2, 
-        y1+y2, 
+        x1+x2,
+        y1+y2,
         z1+z2);
-    
+   
     return output;
 }
-
+ 
 // multiplies a constant and a vector together
 function mult(c, vec) {
     var x = vec.getX(), y = vec.getY(), z = vec.getZ();
     var output = new Vector(
-        c * x, 
-        c * y, 
+        c * x,
+        c * y,
         c * z);
-    
+   
     return output;
 }
-
+ 
 // mandelbulb vector growth formula
 // if current vector magnitude > 1 and t is not too close to a multiple of (pi/2)
 // this will give a vector of greater magnitude than the vector put in
@@ -1476,36 +1592,37 @@ function formula(vec, n) {
     var p = phi(vec);
     var k = Math.pow(mag(vec), n);
     var output = new Vector(
-        k*Math.sin(n*t)*Math.cos(n*p), 
-        k*Math.sin(n*t)*Math.sin(n*p), 
+        k*Math.sin(n*t)*Math.cos(n*p),
+        k*Math.sin(n*t)*Math.sin(n*p),
         k*Math.cos(n*t));
-    
+   
     return output;
 }
-
+ 
 // theta vector value (arccos)
 function theta(vec) {
     var x = vec.getX(), y = vec.getY(), z = vec.getZ();
     return (Math.acos(z/(mag(vec) + thetaAdj)));
 }
-
+ 
 // phi vector value (arctan)
 function phi(vec) {
     var x = vec.getX(), y = vec.getY(), z = vec.getZ();
     return (Math.atan(y/(x + phiAdj)));
 }
-
+ 
 // distance from center
 // moves vector origin to center and calculates its magnitude
 function rfc(x, y, z) {
     var vec = new Vector(x - (d/2), y - (d/2), z - (d/2));
-    return mag(vec); 
+    return mag(vec);
 }
-
+ 
 // degrees to radians
 function d2r(degrees) {
     return (pi * degrees / 180);
 }
-
+ 
 // run main method
 main();
+
