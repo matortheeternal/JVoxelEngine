@@ -5,7 +5,7 @@ This is a voxel engine made in Java that uses software raycasting.  You can comp
 
 **Images:**
 
-The [imgur album](http://imgur.com/a/hcjta) has a bunch of cool images in it.
+The [imgur album](http://imgur.com/a/bBUHh) has a bunch of cool images in it.
 
 **Controls:**
 - W   Move forward
